@@ -5,7 +5,7 @@
 FROM ubuntu:latest
 
 RUN apt-get update -y
-RUN apt-get install -y wget
+RUN apt-get install -y wget curl
 
 RUN wget https://github.com/open-policy-agent/opa/releases/download/v0.41.0/opa_linux_amd64
 RUN mv opa_linux_amd64 opa
