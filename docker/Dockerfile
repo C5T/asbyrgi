@@ -16,4 +16,5 @@ RUN if ! diff opa.sha256 opa.sha256.golden ; then echo 'OPA binary SHA256 check 
 RUN chmod +x opa
 RUN mv opa /usr/bin/opa
 
-ENTRYPOINT ["opa"]
+COPY run_opa.sh /run_opa.sh
+ENTRYPOINT ["/run_opa.sh"]
