@@ -59,7 +59,7 @@ elif [ "$1" == "rego2js" ] ; then
       exit 1
     fi
     # TODO(dkorolev): Pass "$3" and "$4" to the script.
-    (cat /src/pp_js.inl; /src/ir2dsl.js /tmp/ir.json) | cpp | grep -v '^#' | grep -v '^$'
+    (cat /src/preprocess.inl.js; /src/ir2dsl.js /tmp/ir.json) | cpp | grep -v '^#' | grep -v '^$'
     rm -f /tmp/ir.json
     exit 0
   else

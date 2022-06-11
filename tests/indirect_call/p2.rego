@@ -1,4 +1,4 @@
-#!TEST package answer
+#!TEST the answer
 
 package the
 default answer = null

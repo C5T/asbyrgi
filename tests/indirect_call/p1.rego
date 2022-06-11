@@ -1,4 +1,4 @@
-#!TEST package answer
+#!TEST the answer
 
 package the
 f("add") = x { x := input.a + input.b }
