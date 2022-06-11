@@ -8,6 +8,9 @@ RUN apt-get update -y
 RUN apt-get install -y wget curl
 RUN apt-get install -y node.js
 
+# NOTE(dkorolev): `cpp` is the C preprocessor, that is very lightweight, not the full C++ dev env.
+RUN apt-get install -y cpp
+
 RUN wget https://github.com/open-policy-agent/opa/releases/download/v0.41.0/opa_linux_amd64
 RUN mv opa_linux_amd64 opa
 RUN sha256sum opa
