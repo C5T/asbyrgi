@@ -15,9 +15,9 @@ if [ "$1" == "ir" ] ; then
     fi
     exit 0
   else
-    echo 'Recommended synopsis: `docker run -v $PWD:/input $CONTAINER_ID ir policy.rego myapi result | jq .`.'
+    echo 'Recommended synopsis: `docker run -v $PWD:/input $JSOPA_CONTAINER_ID ir policy.rego myapi result | jq .`.'
     echo 'This requires `policy.rego` in the current directory, and outputs the IR for package `myapi`, rule `result`, as a JSON.'
-    echo 'Easiest way to obtain `CONTAINER_ID`: `export CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
     exit 1
   fi
 elif [ "$1" == "ir2dsl" ] ; then
@@ -34,9 +34,9 @@ elif [ "$1" == "ir2dsl" ] ; then
     ./src/ir2dsl.js /tmp/ir.json
     exit 0
   else
-    echo 'Recommended synopsis: `docker run -v $PWD:/input $CONTAINER_ID ir2dsl policy.rego myapi result | jq .`.'
+    echo 'Recommended synopsis: `docker run -v $PWD:/input $JSOPA_CONTAINER_ID ir2dsl policy.rego myapi result | jq .`.'
     echo 'This requires `policy.rego` in the current directory, and outputs the IR for package `myapi`, rule `result`, as a JSON.'
-    echo 'Easiest way to obtain `CONTAINER_ID`: `export CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
     exit 1
   fi
 elif [ "$1" == "gengolden" ] ; then
@@ -52,9 +52,9 @@ elif [ "$1" == "gengolden" ] ; then
     wait
     exit 0
   else
-    echo 'Recommended synopsis: `docker run -v $PWD:/input $CONTAINER_ID gengolden policy.rego myapi result tests.json`.'
+    echo 'Recommended synopsis: `docker run -v $PWD:/input $JSOPA_CONTAINER_ID gengolden policy.rego myapi result tests.json`.'
     echo 'This requires `policy.rego` and `tests.json` in the current directory. The tests should be one JSON per line.'
-    echo 'Easiest way to obtain `CONTAINER_ID`: `export CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
     exit 1
   fi
 else

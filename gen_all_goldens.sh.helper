@@ -1,0 +1,19 @@
+#!/bin/bash
+
+JSOPA_CONTAINER_ID=$1
+REGO="$2"
+
+HEADER=$(head -n 1 "$REGO")
+
+if [[ "$HEADER" =~ \#!TEST ]] ; then
+  read -r UNUNSED_TEST PACKAGE RULE TESTS_FILE <<< "$HEADER"
+  NAME=$(basename "$REGO")
+  DIR=$(dirname "$REGO")
+  TESTS_FILE="${TESTS_FILE:-tests.json}"
+
+  echo -n "Processing '$REGO' ..."
+  (cd $DIR; docker run -v "$PWD":/input $CONTAINER_ID gengolden $NAME $PACKAGE $RULE $TESTS_FILE >$NAME.goldens.json)
+  echo -e "\b\b\b\b: Done."
+else
+  echo "No '#!TEST' directive in '$REGO', skipping the file."
+fi
