@@ -6,13 +6,12 @@ REGO="$2"
 HEADER=$(head -n 1 "$REGO")
 
 if [[ "$HEADER" =~ \#!TEST ]] ; then
-  read -r UNUNSED_TEST PACKAGE RULE TESTS_FILE <<< "$HEADER"
+  read -r UNUNSED_TEST PACKAGE RULE <<< "$HEADER"
   NAME=$(basename "$REGO")
   DIR=$(dirname "$REGO")
-  TESTS_FILE="${TESTS_FILE:-tests.json}"
 
-  echo -n "Creating '$REGO.goldens.json' ..."
-  if (cd $DIR; docker run -v "$PWD":/input $CONTAINER_ID gengolden $NAME $PACKAGE $RULE $TESTS_FILE >$NAME.goldens.json) ; then
+  echo -n "Creating '$REGO.dsl' ..."
+  if (cd $DIR; docker run -v "$PWD":/input $CONTAINER_ID ir2dsl $NAME $PACKAGE $RULE >$NAME.dsl) ; then
     echo -e "\b\b\b\b: Done."
   else
     echo 'Failed.'

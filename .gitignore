@@ -1,1 +1,2 @@
 *.rego.goldens.json
+*.rego.dsl
