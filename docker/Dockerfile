@@ -6,6 +6,7 @@ FROM ubuntu:latest
 
 RUN apt-get update -y
 RUN apt-get install -y wget curl
+RUN apt-get install -y node.js
 
 RUN wget https://github.com/open-policy-agent/opa/releases/download/v0.41.0/opa_linux_amd64
 RUN mv opa_linux_amd64 opa
@@ -17,4 +18,5 @@ RUN chmod +x opa
 RUN mv opa /usr/bin/opa
 
 COPY run_opa.sh /run_opa.sh
+COPY $PWD/src /src
 ENTRYPOINT ["/run_opa.sh"]

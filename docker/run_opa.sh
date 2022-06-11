@@ -20,6 +20,25 @@ if [ "$1" == "ir" ] ; then
     echo 'Easiest way to obtain `CONTAINER_ID`: `export CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
     exit 1
   fi
+elif [ "$1" == "ir2dsl" ] ; then
+  if [ $# == 4 ] ; then
+    if ! [ -e /input/"$2" ] ; then
+      echo "The input '$2' file is not found."
+      exit 1
+    fi
+    if ! opa build /input/"$2" -e "$3"/"$4" -t plan -o /dev/stdout | tar xz -O /plan.json >/tmp/ir.json 2>/dev/null ; then
+      echo 'OPA run failed.' >/dev/stderr
+      exit 1
+    fi
+    # TODO(dkorolev): Pass "$3" and "$4" to the script.
+    ./src/ir2dsl.js /tmp/ir.json
+    exit 0
+  else
+    echo 'Recommended synopsis: `docker run -v $PWD:/input $CONTAINER_ID ir2dsl policy.rego myapi result | jq .`.'
+    echo 'This requires `policy.rego` in the current directory, and outputs the IR for package `myapi`, rule `result`, as a JSON.'
+    echo 'Easiest way to obtain `CONTAINER_ID`: `export CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` repo.'
+    exit 1
+  fi
 elif [ "$1" == "gengolden" ] ; then
   if [ $# == 5 ] ; then
     opa build /input/"$2"
