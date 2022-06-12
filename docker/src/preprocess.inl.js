@@ -5,7 +5,7 @@ let plans = {};
 
 const opa_builtins = {
   plus: (args) => { return { t: 'number', v: args[0].v + args[1].v }; },
-  minus: (args) => { return { t: 'number', v: args[0].v + args[1].v }; },  // NOTE(dkorolev): Broken by design for now!
+  minus: (args) => { return { t: 'number', v: args[0].v - args[1].v }; },
   mul: (args) => { return { t: 'number', v: args[0].v * args[1].v }; },
   numbers: {
     range: (args) => {
