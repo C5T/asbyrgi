@@ -3,7 +3,7 @@ name: Tests
 on: [push]
 
 jobs:
-  run_all_tests:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out JSOPA'
