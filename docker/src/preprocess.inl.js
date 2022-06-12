@@ -38,14 +38,14 @@ const internal_to_external = (x) => {
 };
 
 // TODO(dkorolev): Write this.
-const external_to_internal = (x) => {
-  const t = typeof x;
-  if (t === 'number') {
-    return { t: 'number', v: x };
+const external_to_internal = (v) => {
+  const t = typeof v;
+  if (t === 'string' || t === 'number' || t === 'boolean') {
+    return { t, v };
   } else if (t === 'object') {
     let result = { t: 'object', v: {}};
-    for (let k in x) {
-      result.v[k] = external_to_internal(x[k]);
+    for (let k in v) {
+      result.v[k] = external_to_internal(v[k]);
     }
     return result;
   } else {
