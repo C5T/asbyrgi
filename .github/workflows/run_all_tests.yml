@@ -1,0 +1,43 @@
+name: Run all tests
+
+on: [push]
+
+jobs:
+  run_all_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Check out JSOPA'
+        uses: actions/checkout@v3
+        with:
+          path: jsopa
+      - name: 'Check out `node_modules`'
+        uses: actions/checkout@v3
+        with:
+          repository: dkorolev/node_modules_mocha_chai_tar_gz
+          path: node_modules_mocha_chai_tar_gz
+      - name: 'Unpack `node_modules`'
+        run: |
+          ls -R jsopa
+          ls -R node_modules_mocha_chai_tar_gz
+          (cd node_modules_mocha_chai_tar_gz; tar xzf node_modules.tar.gz; mv node_modules ../jsopa/docker/src)
+      - name: 'Build the JSOPA container'
+        id: jsopa_container
+        run: |
+          (cd jsopa/docker; docker build .)
+          echo ::set-output name=JSOPA_CONTAINER_ID::$(cd jsopa/docker; docker build -q .)
+      - name: 'Generate all `golden`-s'
+        run: |
+          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
+          (cd jsopa; ./gen_all_goldens.sh)
+      - name: 'Generate all JavaScript policies'
+        run: |
+          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
+          (cd jsopa; ./gen_all_js.sh)
+      - name: '[Re-]Generate all the tests (TODO(dkorolev): Fixme.)'
+        run: |
+          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
+          (cd jsopa; ./gen_all_js_tests.sh)
+      - name: 'RUN ALL JS TESTS'
+        run: |
+          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
+          (cd jsopa; ./run_all_tests_in_docker.sh)
