@@ -48,7 +48,14 @@ Object.keys(cases).sort().forEach(fn => {
   const t = cases[fn];
   console.log(``);
   console.log(`describe('${fn}', () => {`);
-  console.log(`  const opa = require('./${fn}.js').main;`);
+  console.log(`  const opa = (() => {`);
+  console.log(`    try {`);
+  console.log(`      return require('./${fn}.js').main;`);
+  console.log(`    } catch(e) {`);
+  console.log(`      console.error("Error loading './${fn}.js', did you run './gen_all_js.sh'?");`);
+  console.log(`      process.exit(1);`);
+  console.log(`    }`);
+  console.log(`  })();`);
   for (let i = 0; i < t.tests.length; ++i) {
     console.log(`  it('${JSON.stringify(t.tests[i])}', () => {`)
     console.log(`    expect(opa(${JSON.stringify(t.tests[i])})).to.deep.equal(${JSON.stringify({result: t.goldens[i]})});`);

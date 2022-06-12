@@ -4,7 +4,14 @@
 const { expect } = require('chai');
 
 describe('./indirect_call/p1.rego', () => {
-  const opa = require('././indirect_call/p1.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././indirect_call/p1.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././indirect_call/p1.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('{"f":"add","a":5,"b":10}', () => {
     expect(opa({"f":"add","a":5,"b":10})).to.deep.equal({"result":15});
   });
@@ -17,7 +24,14 @@ describe('./indirect_call/p1.rego', () => {
 });
 
 describe('./indirect_call/p2.rego', () => {
-  const opa = require('././indirect_call/p2.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././indirect_call/p2.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././indirect_call/p2.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('{"f":"add","a":5,"b":10}', () => {
     expect(opa({"f":"add","a":5,"b":10})).to.deep.equal({"result":15});
   });
@@ -30,7 +44,14 @@ describe('./indirect_call/p2.rego', () => {
 });
 
 describe('./indirect_call/p3.rego', () => {
-  const opa = require('././indirect_call/p3.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././indirect_call/p3.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././indirect_call/p3.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('{"f":"add","a":5,"b":10}', () => {
     expect(opa({"f":"add","a":5,"b":10})).to.deep.equal({"result":15});
   });
@@ -43,7 +64,14 @@ describe('./indirect_call/p3.rego', () => {
 });
 
 describe('./smoke/constant_bool/policy.rego', () => {
-  const opa = require('././smoke/constant_bool/policy.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././smoke/constant_bool/policy.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././smoke/constant_bool/policy.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('["the",true,"input"]', () => {
     expect(opa(["the",true,"input"])).to.deep.equal({"result":true});
   });
@@ -59,7 +87,14 @@ describe('./smoke/constant_bool/policy.rego', () => {
 });
 
 describe('./smoke/constant_int/policy.rego', () => {
-  const opa = require('././smoke/constant_int/policy.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././smoke/constant_int/policy.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././smoke/constant_int/policy.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('["the",true,"input"]', () => {
     expect(opa(["the",true,"input"])).to.deep.equal({"result":42});
   });
@@ -75,7 +110,14 @@ describe('./smoke/constant_int/policy.rego', () => {
 });
 
 describe('./smoke/constant_string/policy.rego', () => {
-  const opa = require('././smoke/constant_string/policy.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././smoke/constant_string/policy.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././smoke/constant_string/policy.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('["the",true,"input"]', () => {
     expect(opa(["the",true,"input"])).to.deep.equal({"result":"foo"});
   });
@@ -91,7 +133,14 @@ describe('./smoke/constant_string/policy.rego', () => {
 });
 
 describe('./smoke/id/policy.rego', () => {
-  const opa = require('././smoke/id/policy.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././smoke/id/policy.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././smoke/id/policy.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('{"x":true}', () => {
     expect(opa({"x":true})).to.deep.equal({"result":true});
   });
@@ -104,7 +153,14 @@ describe('./smoke/id/policy.rego', () => {
 });
 
 describe('./smoke/sum/policy.rego', () => {
-  const opa = require('././smoke/sum/policy.rego.js').main;
+  const opa = (() => {
+    try {
+      return require('././smoke/sum/policy.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././smoke/sum/policy.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
   it('{"a":1,"b":1}', () => {
     expect(opa({"a":1,"b":1})).to.deep.equal({"result":2});
   });
