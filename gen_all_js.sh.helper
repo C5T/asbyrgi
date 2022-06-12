@@ -11,7 +11,7 @@ if [[ "$HEADER" =~ \#!TEST ]] ; then
   DIR=$(dirname "$REGO")
 
   echo -n "Creating '$REGO.js' ..."
-  if (cd $DIR; docker run -v "$PWD":/input $JSOPA_CONTAINER_ID rego2js $NAME $PACKAGE $RULE >$NAME.js) ; then
+  if (cd "$DIR"; cat "$NAME" | docker run -i $JSOPA_CONTAINER_ID rego2js $PACKAGE $RULE >"$NAME.js") ; then
     echo -e "\b\b\b\b: Done."
   else
     echo 'Failed.'

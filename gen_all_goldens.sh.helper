@@ -12,7 +12,7 @@ if [[ "$HEADER" =~ \#!TEST ]] ; then
   TESTS_FILE="${TESTS_FILE:-tests.json}"
 
   echo -n "Creating '$REGO.goldens.json' ..."
-  if (cd $DIR; docker run -v "$PWD":/input $JSOPA_CONTAINER_ID gengolden $NAME $PACKAGE $RULE $TESTS_FILE >$NAME.goldens.json) ; then
+  if (cd "$DIR"; docker run -v "$PWD":/input $JSOPA_CONTAINER_ID gengolden "$NAME" $PACKAGE $RULE $TESTS_FILE >"$NAME.goldens.json") ; then
     echo -e "\b\b\b\b: Done."
   else
     echo 'Failed.'
