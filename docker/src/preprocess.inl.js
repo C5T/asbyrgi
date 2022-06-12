@@ -8,7 +8,8 @@ const opa_builtins = {
 };
 
 const internal_to_external_impl = {
-  number: (x) => { return x },
+  number: (x) => { return x; },
+  string: (x) => { return x; },
   object: (x) => {
     let result = {};
     for (let k in x) {
@@ -64,6 +65,15 @@ const opa_get_function_impl = (f) => {
   }
 };
 
+// NOTE(dkorolev): This is a hack for now, to make the JS tests pass.
+const wrap_for_assignment = (x) => {
+  if (typeof x === 'string') {
+    return {t: 'string', v: x};
+  } else {
+    return x;
+  }
+};
+
 // TODO(dkorolev): Expose the number of functions to this macro?
 #define BeginOPADSL()
 #define EndOPADSL() module.exports.plans = plans;
@@ -92,8 +102,8 @@ const opa_get_function_impl = (f) => {
 
 #define ArrayAppendStmt(array, value) if (array === undefined || array.t !== 'arrat') return; array.push(value);
 #define AssignIntStmt(value, target) target = value;  // TODO(dkorolev): Check the type, fail if wrong, I assume?
-#define AssignVarOnceStmt(source, target) if (target !== undefined) return; target = source;
-#define AssignVarStmt(source, target) target = source;
+#define AssignVarOnceStmt(source, target) if (target !== undefined) return; target = wrap_for_assignment(source);
+#define AssignVarStmt(source, target) target = wrap_for_assignment(source);
 // TODO(dkorolev): `BreakStmt`.
 // TODO(dkorolev): `CallDynamicStmt`.
 // TODO(dkorolev): `CallStmt`.
