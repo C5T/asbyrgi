@@ -5,12 +5,24 @@ let plans = {};
 
 const opa_builtins = {
   plus: (args) => { return { t: 'number', v: args[0].v + args[1].v }; },
+  mul: (args) => { return { t: 'number', v: args[0].v * args[1].v }; },
+  numbers: {
+    range: (args) => {
+      let v = [];
+      // TODO(dkorolev): This is a dirty hack, of course, fix it.
+      for (let i = args[0].v; i <= args[1].v; ++i) {
+        v.push(i);
+      }
+      return { t: 'array', v };
+    }
+  }
 };
 
 const internal_to_external_impl = {
   number: (x) => { return x; },
   string: (x) => { return x; },
   boolean: (x) => { return x; },
+  array: (x) => { return x; },
   object: (x) => {
     let result = {};
     for (let k in x) {
@@ -114,7 +126,7 @@ const wrap_for_assignment = (x) => {
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
 #define DotStmt(source, key, target) target = source.v[key];
-#define EqualStmt(a, b) if (JSON.stringify(a) !== JSON.stringify(b)) return;
+#define EqualStmt(a, b) if (JSON.stringify(a) !== JSON.stringify(wrap_for_assignment(b))) return;
 #define IsArrayStmt(array) if (array === undefined || array.t !== 'array') return;
 #define IsDefinedStmt(source) if (source === undefined) return;
 #define IsObjectStmt(source) if (source === undefined || source.t !== 'object') return;
