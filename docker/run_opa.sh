@@ -86,6 +86,10 @@ elif [ "$1" == "gengolden" ] ; then
     echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` dir.'
     exit 1
   fi
+elif [ "$1" == "run_all_tests" ] ; then
+  # NOTE(dkorolev): For this to work the right `node_modules` directory should be placed under `docker/src/` before `docker build .`.
+  ln -sf /src/node_modules /node_modules
+  /node_modules/mocha/bin/mocha.js --color /tests/all_tests.js
 else
   opa $*
 fi
