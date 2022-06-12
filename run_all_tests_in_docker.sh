@@ -13,4 +13,5 @@ if docker run -v "$PWD/tests":/tests $JSOPA_CONTAINER_ID run_all_tests ; then
   echo -e "\n\033[32m\033[1mALL TESTS PASSED.\033[0m"
 else
   echo -e "\n\033[31m\033[1mSOME TESTS FAILED.\033[0m"
+  exit 1
 fi

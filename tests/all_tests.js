@@ -152,6 +152,32 @@ describe('./smoke/id/policy.rego', () => {
   });
 });
 
+describe('./smoke/subtract/policy.rego', () => {
+  const opa = (() => {
+    try {
+      return require('././smoke/subtract/policy.rego.js').main;
+    } catch(e) {
+      console.error("Error loading '././smoke/subtract/policy.rego.js', did you run './gen_all_js.sh'?");
+      process.exit(1);
+    }
+  })();
+  it('{"a":10,"b":1}', () => {
+    expect(opa({"a":10,"b":1})).to.deep.equal({"result":9});
+  });
+  it('{"a":1,"b":0}', () => {
+    expect(opa({"a":1,"b":0})).to.deep.equal({"result":1});
+  });
+  it('{"a":1,"b":-1}', () => {
+    expect(opa({"a":1,"b":-1})).to.deep.equal({"result":2});
+  });
+  it('{"a":1000000,"b":1}', () => {
+    expect(opa({"a":1000000,"b":1})).to.deep.equal({"result":999999});
+  });
+  it('{"a":999999,"b":-1}', () => {
+    expect(opa({"a":999999,"b":-1})).to.deep.equal({"result":1000000});
+  });
+});
+
 describe('./smoke/sum/policy.rego', () => {
   const opa = (() => {
     try {
