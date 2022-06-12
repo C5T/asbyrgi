@@ -10,6 +10,7 @@ const opa_builtins = {
 const internal_to_external_impl = {
   number: (x) => { return x; },
   string: (x) => { return x; },
+  boolean: (x) => { return x; },
   object: (x) => {
     let result = {};
     for (let k in x) {
@@ -69,6 +70,8 @@ const opa_get_function_impl = (f) => {
 const wrap_for_assignment = (x) => {
   if (typeof x === 'string') {
     return {t: 'string', v: x};
+  } else if (typeof x === 'boolean') {
+    return {t: 'boolean', v: x};
   } else {
     return x;
   }
