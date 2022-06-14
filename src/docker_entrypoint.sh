@@ -5,7 +5,7 @@
 
 if [ "$1" == "rego2ir" ] ; then
   if [ $# == 3 ] ; then
-    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | tar xz -O /plan.json 2>/dev/null ; then
+    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | gunzip | tar x -O plan.json 2>/dev/null ; then
       echo 'OPA run failed.' >/dev/stderr
       exit 1
     fi
@@ -18,7 +18,7 @@ if [ "$1" == "rego2ir" ] ; then
   fi
 elif [ "$1" == "rego2dsl" ] ; then
   if [ $# == 3 ] ; then
-    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | tar xz -O /plan.json >/tmp/ir.json 2>/dev/null ; then
+    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | gunzip | tar x -O plan.json >/tmp/ir.json 2>/dev/null ; then
       echo 'OPA run failed.' >/dev/stderr
       exit 1
     fi
@@ -38,7 +38,7 @@ elif [ "$1" == "rego2dsl" ] ; then
   fi
 elif [ "$1" == "rego2js" ] ; then
   if [ $# == 3 ] ; then
-    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | tar xz -O /plan.json >/tmp/ir.json 2>/dev/null ; then
+    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | gunzip | tar x -O plan.json >/tmp/ir.json 2>/dev/null ; then
       echo 'OPA run failed.' >/dev/stderr
       exit 1
     fi
@@ -47,7 +47,7 @@ elif [ "$1" == "rego2js" ] ; then
       exit 1
     fi
     # TODO(dkorolev): Pass "$2" and "$3" to the script.
-    (cat /src/preprocess.inl.js; /src/ir2dsl.js /tmp/ir.json) | cpp | grep -v '^#' | grep -v '^$'
+    (cat /src/preprocess.inl.js; /src/ir2dsl.js /tmp/ir.json) | ucpp | grep -v '^#' | grep -v '^$'
     rm -f /tmp/ir.json
     exit 0
   else
