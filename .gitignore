@@ -1,3 +1,6 @@
 *.rego.goldens.json
 *.rego.dsl
 *.rego.js
+
+node_modules
+package-lock.json
