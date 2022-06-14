@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(dirname "${BASH_SOURCE[0]}")"
+
 if [ "$JSOPA_CONTAINER_ID" == "" ] ; then
   echo 'Building the container, export `$JSOPA_CONTAINER_ID` to skip this phase.'
   JSOPA_CONTAINER_ID=$(cd docker; docker build -q .)
@@ -8,4 +10,4 @@ else
 fi
 
 find . -iname '*.rego.js' -exec rm "{}" \;
-find . -iname '*.rego' -exec ./gen_all_js.sh.helper $JSOPA_CONTAINER_ID "{}" \;
+find . -iname '*.rego' -exec "$SCRIPT_DIR/gen_all_js.sh.helper" $JSOPA_CONTAINER_ID "{}" \;
