@@ -174,4 +174,4 @@ For the test to work, each `.rego` file should start with a `#!TEST` "shebang" l
 
 I plan to grow this set of tests dramatically, as its scope and coverage will be instrumental in developing a fully compliant high-performance specialized OPA engine moving forward. Would appreciate help here.
 
-All tests are run by a [GitHub action](https://github.com/dkorolev/jsopa/actions/runs/2484298338).
+All tests are run by a [GitHub action](https://github.com/C5T/jsopa/actions/runs/2492433262).
