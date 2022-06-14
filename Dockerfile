@@ -6,8 +6,6 @@ FROM ubuntu:latest
 
 RUN apt-get update -y
 RUN apt-get install -y wget curl
-RUN apt-get install -y node.js
-
 RUN apt-get install -y jq
 
 # NOTE(dkorolev): `cpp` is the C preprocessor, that is very lightweight, not the full C++ dev env.

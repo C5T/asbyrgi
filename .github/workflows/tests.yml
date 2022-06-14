@@ -33,10 +33,6 @@ jobs:
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
           (cd jsopa; ./scripts/gen_all_js_tests.sh)
-      - name: 'RUN ALL JS TESTS OUTSIDE DOCKER'
+      - name: 'RUN ALL JS TESTS'
         run: |
           (cd jsopa; ./node_modules/mocha/bin/mocha.js tests/all_tests.js)
-      - name: 'RUN ALL JS TESTS IN DOCKER'
-        run: |
-          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./scripts/run_all_tests_in_docker.sh)
