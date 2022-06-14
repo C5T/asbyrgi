@@ -27,15 +27,15 @@ jobs:
       - name: 'Generate all `golden`-s'
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./gen_all_goldens.sh)
+          (cd jsopa; ./scripts/gen_all_goldens.sh)
       - name: 'Generate all JavaScript policies'
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./gen_all_js.sh)
+          (cd jsopa; ./scripts/gen_all_js.sh)
       - name: '[Re-]Generate all the tests (TODO(dkorolev): Fixme.)'
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./gen_all_js_tests.sh)
+          (cd jsopa; ./scripts/gen_all_js_tests.sh)
       - name: 'RUN ALL JS TESTS'
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
