@@ -11,19 +11,16 @@ jobs:
         with:
           path: jsopa
           ref: ${{ github.ref }}
-      - name: 'Check out `node_modules`'
-        uses: actions/checkout@v3
-        with:
-          repository: dkorolev/node_modules_mocha_chai_tar_gz
-          path: node_modules_mocha_chai_tar_gz
-      - name: 'Unpack `node_modules`'
+      - name: 'Use `node.js`'
+        uses: actions/setup-node@v3
+      - name: 'Run `npm i`'
         run: |
-          (cd node_modules_mocha_chai_tar_gz; tar xzf node_modules.tar.gz; mv node_modules ../jsopa/docker/src)
+          (cd jsopa; npm i)
       - name: 'Build the JSOPA container'
         id: jsopa_container
         run: |
-          (cd jsopa/docker; docker build .)
-          echo ::set-output name=JSOPA_CONTAINER_ID::$(cd jsopa/docker; docker build -q .)
+          (cd jsopa; docker build .)
+          echo ::set-output name=JSOPA_CONTAINER_ID::$(cd jsopa; docker build -q .)
       - name: 'Generate all `golden`-s'
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
@@ -36,7 +33,10 @@ jobs:
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
           (cd jsopa; ./scripts/gen_all_js_tests.sh)
-      - name: 'RUN ALL JS TESTS'
+      - name: 'RUN ALL JS TESTS OUTSIDE DOCKER'
+        run: |
+          (cd jsopa; ./node_modules/mocha/bin/mocha.js tests/all_tests.js)
+      - name: 'RUN ALL JS TESTS IN DOCKER'
         run: |
           export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./run_all_tests_in_docker.sh)
+          (cd jsopa; ./scripts/run_all_tests_in_docker.sh)

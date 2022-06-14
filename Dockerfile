@@ -22,6 +22,9 @@ RUN if ! diff opa.sha256 opa.sha256.golden ; then echo 'OPA binary SHA256 check 
 RUN chmod +x opa
 RUN mv opa /usr/bin/opa
 
-COPY run_opa.sh /run_opa.sh
-COPY $PWD/src /src
-ENTRYPOINT ["/run_opa.sh"]
+COPY src /src
+
+# NOTE(dkorolev): Need to run `npm i` before building this Docker container.
+COPY node_modules /node_modules
+
+ENTRYPOINT ["/src/docker_entrypoint.sh"]
