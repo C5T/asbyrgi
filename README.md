@@ -1,8 +1,8 @@
-[![Tests](https://github.com/dkorolev/jsopa/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/dkorolev/jsopa/actions/workflows/tests.yml)
+[![Tests](https://github.com/c5t/jsopa/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/dkorolev/jsopa/actions/workflows/tests.yml)
 
 # `JSOPA`
 
-The `jsopa` repository (to be moved to `C5T/jsopa`) is the OPA IR playground with JavaScript.
+The `jsopa` repository is the OPA IR playground with JavaScript.
 
 ## Vision
 
@@ -46,7 +46,7 @@ At the end of the short-term goals, a JavaScript-based, or C-based, transpiled p
 
 My view is that natively integrating OPA/Rego policies with actor models and custom in-memory data layouts, in addition to advanced static type checking and optimizations based on it, are the holy grail that OPA needs in order to power low-latency high-QPS use cases.
 
-Besides, [C5T/Current](https://github.com/c5t/current), my high-performance C++ project is well suited to complement the long term vision above. I am currently working on such a use case in a private company, and would love to see how we can best leverage OPA.
+Besides, [C5T/Current](https://github.com/c5t/current) is well suited to complement the long term vision above. I am currently working on such a use case in a private company, and would love to see how we can best leverage OPA.
 
 ## Contents and Usage
 
@@ -69,7 +69,7 @@ Platform: linux/amd64
 WebAssembly: available
 ```
 
-Take the [A+B](https://github.com/dkorolev/jsopa/blob/main/tests/smoke/sum/policy.rego) policy example from this repo:
+Take the [A+B](https://github.com/c5t/jsopa/blob/main/tests/smoke/sum/policy.rego) policy example from this repo:
 
 ```
 package smoke
@@ -81,7 +81,7 @@ The extra commands added to the `opa` binary by this container are: `rego2ir`, `
 Here is how the DSL representation of the above policy looks like:
 
 ```
-curl -s https://raw.githubusercontent.com/dkorolev/jsopa/main/tests/smoke/sum/policy.rego \
+curl -s https://raw.githubusercontent.com/c5t/jsopa/main/tests/smoke/sum/policy.rego \
       | docker run -i dimakorolev/jsopa rego2dsl smoke sum
 ```
 
@@ -151,20 +151,20 @@ The JavaScript code, for example, is generated directly from this DSL, in a sing
 The raw IR representation for the above policy is a bit loo long and unreadable to include in the README, but you can find it [here](https://gist.github.com/dkorolev/99808d780b29dcbe398d8841b8f338ce), and the way to generate it is:
 
 ```
-curl -s https://raw.githubusercontent.com/dkorolev/jsopa/main/tests/smoke/sum/policy.rego \
+curl -s https://raw.githubusercontent.com/c5t/jsopa/main/tests/smoke/sum/policy.rego \
       | docker run -i dimakorolev/jsopa rego2ir smoke sum | jq .
 ```
 
 And here is the [example JavaScript](https://gist.github.com/dkorolev/03cda1b005fda259d227e1388224d4f5) generated for the same Rego policy, same package, same rule; it is output by:
 
 ```
-curl -s https://raw.githubusercontent.com/dkorolev/jsopa/main/tests/smoke/sum/policy.rego \
+curl -s https://raw.githubusercontent.com/c5t/jsopa/main/tests/smoke/sum/policy.rego \
       | docker run -i dimakorolev/jsopa rego2js smoke sum
 ```
 
 ### Tests
 
-The [`tests/`](https://github.com/dkorolev/jsopa/tree/main/tests) directory of this repository contains test policies for JSOPA.
+The [`tests/`](https://github.com/c5t/jsopa/tree/main/tests) directory of this repository contains test policies for JSOPA.
 
 Each `.rego` file from there would be included in the test suite. In the directory with each `.rego` file there should be a `tests.json` file, which contains one JSON per line: the test inputs.
 
