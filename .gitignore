@@ -1,6 +1,9 @@
 *.rego.goldens.json
 *.rego.dsl
 *.rego.js
+*.rego.*.cpp
 
 node_modules
 package-lock.json
+
+a.out
