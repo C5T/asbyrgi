@@ -70,7 +70,7 @@
 #define OperandBool(a) OPABoolean(a)
 #define OperandStringIndex(a, string) string  // TODO: Compile-time strings for strong typing.
 
-#define StringConstantIndex(a) StringConstant(a)
+#define StringConstantIndex(a) OPAStringConstant(a)
 
 #define Func(x) OPAFunctionWrapper(x)
 #define BuiltinFunc(x) opa_builtin.x

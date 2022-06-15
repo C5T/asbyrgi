@@ -1,3 +1,5 @@
+// TODO: Escape all the strings, of course. Once Current/JSON is in the picture.
+
 #include <cstdarg>
 #include <functional>
 #include <iostream>
@@ -5,15 +7,20 @@
 #include <memory>
 #include <vector>
 
-struct OPALocalWrapper {
+struct OPALocalWrapper final {
   size_t const local;
   OPALocalWrapper() = delete;
   explicit OPALocalWrapper(size_t local) : local(local) {}
 };
 
-struct OPAFunctionWrapper {
+struct OPAFunctionWrapper final {
   size_t const function;
   explicit OPAFunctionWrapper(size_t function) : function(function) {}
+};
+
+struct OPAStringConstant final {
+  size_t const string_index;
+  explicit OPAStringConstant(size_t string_index) : string_index(string_index) {}
 };
 
 struct OPABoolean final {
@@ -93,6 +100,22 @@ OPAStmt stmtAssignVarOnce(TranspilationContext const& ctx, OPALocalWrapper sourc
   };
 }
 
+OPAStmt stmtAssignVarOnce(TranspilationContext const& ctx, const char* source, OPALocalWrapper target) {
+  return [=](f_t next) {
+    std::cout << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local << "].SetString(\"" << source << "\");\n";
+    next();
+    std::cout << "}\n";
+  };
+}
+
+OPAStmt stmtAssignVarOnce(TranspilationContext const& ctx, OPABoolean source, OPALocalWrapper target) {
+  return [=](f_t next) {
+    std::cout << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local << "].SetBoolean(" << std::boolalpha << source.boolean << ");\n";
+    next();
+    std::cout << "}\n";
+  };
+}
+
 OPAStmt stmtAssignVar(TranspilationContext const& ctx, OPALocalWrapper source, OPALocalWrapper target) {
   return [=](f_t next) {
     std::cout << "locals[" << target.local << "] = locals[" << source.local << "];\n";
@@ -136,6 +159,24 @@ OPAStmt stmtIsUndefined(TranspilationContext const& ctx, OPALocalWrapper source)
 OPAStmt stmtMakeNull(TranspilationContext const& ctx, OPALocalWrapper target) {
   return [=](f_t next) {
     std::cout << "locals[" << target.local << "].MakeNull();\n";
+    next();
+  };
+}
+
+/*
+OPAStmt stmtMakeNumberInt(TranspilationContext const& ctx, OPAStringConstant value, OPALocalWrapper target) {
+  return [=](f_t next) {
+    // TODO: Not `FromString`, of course.
+    std::cout << "locals[" << target.local << "].SetNumberFromString(\"" << ctx.rego_strings[value.string_index] << "\");\n";
+    next();
+  };
+}
+*/
+
+OPAStmt stmtMakeNumberRef(TranspilationContext const& ctx, OPAStringConstant value, OPALocalWrapper target) {
+  return [=](f_t next) {
+    // TODO: Not `FromString`, of course.
+    std::cout << "locals[" << target.local << "].SetNumberFromString(\"" << ctx.rego_strings[value.string_index] << "\");\n";
     next();
   };
 }
@@ -236,6 +277,7 @@ OPAStmt stmtBlock(TranspilationContext const&, std::vector<OPAStmt> const& stmts
 
 struct opa_builtin_t final {
   bool plus;
+  bool minus;
   bool mul;
   struct numbers_t final {
     bool range;
