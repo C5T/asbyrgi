@@ -56,6 +56,26 @@ elif [ "$1" == "rego2js" ] ; then
     echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: run `export JSOPA_CONTAINER_ID=$(docker build -q .)` from this repo.'
     exit 1
   fi
+elif [ "$1" == "rego2cpp" ] ; then
+  if [ $# == 3 ] ; then
+    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | gunzip | tar x -O plan.json >/tmp/ir.json 2>/dev/null ; then
+      echo 'OPA run failed.' >/dev/stderr
+      exit 1
+    fi
+    if ! [ -s /tmp/ir.json ] ; then
+      echo 'No IR generated.' >/dev/stderr
+      exit 1
+    fi
+    # TODO(dkorolev): Pass "$2" and "$3" to the script.
+    (cat /src/preprocess.inl.h; /src/ir2dsl.js /tmp/ir.json) | ucpp | grep -v '^#' | grep -v '^$'
+    rm -f /tmp/ir.json
+    exit 0
+  else
+    echo 'Usage: cat policy.rego | docker run -i $JSOPA_CONTAINER_ID rego2cpp myapi result'
+    echo 'The above command would generate the C++ source for the rule `result` from the package `myapi` of `policy.rego`.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` dir.'
+    exit 1
+  fi
 elif [ "$1" == "gengolden" ] ; then
   if [ $# == 5 ] ; then
     opa build /input/"$2"
