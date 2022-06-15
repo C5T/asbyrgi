@@ -13,7 +13,7 @@ if [ "$1" == "rego2ir" ] ; then
   else
     echo 'Usage: cat policy.rego | docker run -i $JSOPA_CONTAINER_ID rego2ir myapi result | jq .'
     echo 'The above command would generate the IR for the rule `result` from the package `myapi` of `policy.rego`.'
-    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` dir.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: run `export JSOPA_CONTAINER_ID=$(docker build -q .)` from this repo.'
     exit 1
   fi
 elif [ "$1" == "rego2dsl" ] ; then
@@ -33,7 +33,7 @@ elif [ "$1" == "rego2dsl" ] ; then
   else
     echo 'Usage: cat policy.rego | docker run -i $JSOPA_CONTAINER_ID rego2dsl myapi result'
     echo 'The above command would generate the DSL for the rule `result` from the package `myapi` of `policy.rego`.'
-    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` dir.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: run `export JSOPA_CONTAINER_ID=$(docker build -q .)` from this repo.'
     exit 1
   fi
 elif [ "$1" == "rego2js" ] ; then
@@ -53,7 +53,7 @@ elif [ "$1" == "rego2js" ] ; then
   else
     echo 'Usage: cat policy.rego | docker run -i $JSOPA_CONTAINER_ID rego2js myapi result'
     echo 'The above command would generate the JavaScript for the rule `result` from the package `myapi` of `policy.rego`.'
-    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` dir.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: run `export JSOPA_CONTAINER_ID=$(docker build -q .)` from this repo.'
     exit 1
   fi
 elif [ "$1" == "gengolden" ] ; then
@@ -71,7 +71,7 @@ elif [ "$1" == "gengolden" ] ; then
   else
     echo 'Recommended synopsis: `docker run -v "$PWD"/input $JSOPA_CONTAINER_ID gengolden policy.rego myapi result tests.json`.'
     echo 'This requires `policy.rego` and `tests.json` in the current directory. The tests should be one JSON per line.'
-    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: `export JSOPA_CONTAINER_ID=$(docker build -q .)` from the `jsopa/docker` dir.'
+    echo 'Easiest way to obtain `JSOPA_CONTAINER_ID`: run `export JSOPA_CONTAINER_ID=$(docker build -q .)` from this repo.'
     exit 1
   fi
 else
