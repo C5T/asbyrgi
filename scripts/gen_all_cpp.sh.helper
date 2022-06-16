@@ -25,6 +25,18 @@ if [[ "$HEADER" =~ \#!TEST ]] ; then
       echo 'Failed.'
       exit 1
     fi
+    # TODO: This is a dirty hack, of course. Run this policy from within C++.
+    (cat "$SCRIPT_DIR/ir2cpp_runner_before.cc" "$DIR/$NAME.stage3.cpp" "$SCRIPT_DIR/ir2cpp_runner_after.cc" >"$DIR/$NAME.stage4.cpp")
+    echo -n "Creating '$REGO.stage4.cpp.goldens.json' ..."
+    if g++ -I. -std=c++17 "$DIR/$NAME.stage4.cpp" && cat "$DIR/tests.json" | ./a.out >"$DIR/$NAME.stage4.cpp.goldens.json" ; then
+      echo -e "\b\b\b\b: Done."
+    else
+      echo 'Failed.'
+      exit 1
+    fi
+    # TODO: And this is an even more dirty hack.
+    echo "Diffing vs. the golden!"
+    diff "$DIR/$NAME.stage4.cpp.goldens.json" "$DIR/$NAME.goldens.json" && echo "OK!" || echo "Test failed."
   else
     echo 'Failed.'
     exit 1

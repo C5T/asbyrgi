@@ -1,4 +1,4 @@
-*.rego.goldens.json
+*.goldens.json
 *.rego.dsl
 *.rego.js
 *.rego.*.cpp

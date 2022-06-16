@@ -1,31 +1,27 @@
 int main() {
-  OPAValue input;
-  OPAValue data;
-  OPAResultSet result;
+  Policy policy;
+  PopulatePolicy(policy);
+  policy_singleton = &policy;
 
-  TranspilationContext ctx(TranspilationContext::CreateNew(), input, data, result);
-  rego_policy(ctx);
-
-  for (size_t i = 0; i < ctx.opa_function_bodies.size(); ++i) {
+  for (size_t i = 0; i < policy.function_bodies.size(); ++i) {
     std::cout << "value_t function_" << i << "(";
-    for (size_t j = 0u; j < ctx.opa_functions[i].size(); ++j) {
+    for (size_t j = 0u; j < policy.functions[i].size(); ++j) {
       if (j) {
         std::cout << ", ";
       }
       std::cout << "value_t p" << j + 1u;
     }
     std::cout << ") { locals_t locals; ";
-    for (size_t j = 0u; j < ctx.opa_functions[i].size(); ++j) {
-      std::cout << "locals[" << ctx.opa_functions[i][j] << "] = p" << j << ";\n";
+    for (size_t j = 0u; j < policy.functions[i].size(); ++j) {
+      std::cout << "locals[" << policy.functions[i][j] << "] = p" << j + 1u << ";\n";
     }
     std::cout << "value_t retval; \n";
-    ctx.opa_function_bodies[i](ctx)([]() {});
+    policy.function_bodies[i](policy)([]() {});
     std::cout << "return retval; }\n";
   }
 
   std::cout << "result_set_t policy(value_t input, value_t data) {\n";
   std::cout << "locals_t locals; locals[0] = input; locals[1] = data; result_set_t result;\n";
-  ctx.plans["main"](ctx)([]() {});
+  policy.plans["main"](policy)([]() {});
   std::cout << "return result; }\n";
 }
-
