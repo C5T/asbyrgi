@@ -71,6 +71,11 @@ struct LocalValue final {
     return x;
   }
 
+  static LocalValue const& StaticUndefined() {
+    static LocalValue undefined;
+    return undefined;
+  }
+
   void ResetToUndefined(callback_t next) {
     LocalType const save_type = type;
     type = LocalType::Undefined;
@@ -126,15 +131,15 @@ struct LocalValue final {
     type = save_type;
   }
 
-  LocalValue& GetByKey(char const* key) {
+  LocalValue const& GetByKey(char const* key) {
     if (type != LocalType::Object) {
       // TODO(dkorolev): Message type, `file:row:col`.
-      throw std::logic_error("Internal invariant failed.");
+      return StaticUndefined();
     }
     auto const cit = object_keys.find(key);
     if (cit == object_keys.end()) {
       // TODO(dkorolev): Message type, `file:row:col`.
-      throw std::logic_error("Internal invariant failed.");
+      return StaticUndefined();
     }
     return cit->second;
   }
@@ -203,8 +208,9 @@ struct Locals final {
   }
 
   void SetReturnValue(LocalValue const& value, callback_t next) {
-    if (return_value.type != LocalType::Undefined) {
-      throw std::logic_error("Internal invariant failed.");
+    if (return_value.type == LocalType::Undefined) {
+      // TODO(dkorolev): Implement this.
+      return;
     }
     return_value = value;
     next();
