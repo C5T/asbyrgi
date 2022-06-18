@@ -7,6 +7,9 @@ int main() {
   for (size_t i = 0; i < policy.function_bodies.size(); ++i) {
     std::cout << "// function " << i << ":\n";
     Locals locals;
+    for (size_t j = 0u; j < policy.functions[i].size(); ++j) {
+      locals[OPALocalWrapper(policy.functions[i][j])].MarkAsFunctionArgument();
+    }
     policy.function_bodies[i](policy).analyze(
         locals,
         [&locals]() { std::cout << locals << locals << std::endl; },
@@ -18,6 +21,8 @@ int main() {
 
   {
     Locals locals;
+    locals[OPALocalWrapper(0)].MarkAsFunctionArgument();
+    locals[OPALocalWrapper(1)].MarkAsFunctionArgument();
     policy.plans["main"](policy).analyze(
         locals,
         [&locals]() { std::cout << locals << locals << std::endl; },

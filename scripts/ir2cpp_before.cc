@@ -58,6 +58,7 @@ enum class LocalType : uint8_t {
   Boolean = 4,
   Array = 5,
   Object = 6,
+  FunctionArgument = 7,  // NOTE(dkorolev): Effectively, `Any`.
   Unspecified = 255
 };
 
@@ -74,6 +75,12 @@ struct LocalValue final {
   static LocalValue const& StaticUndefined() {
     static LocalValue undefined;
     return undefined;
+  }
+
+  static LocalValue const& StaticFunctionArgument() {
+    static LocalValue any;
+    any.type = LocalType::FunctionArgument;
+    return any;
   }
 
   void ResetToUndefined(callback_t next) {
@@ -104,8 +111,11 @@ struct LocalValue final {
     type = save_type;
   }
 
-  bool IsUndefined() const { return type == LocalType::Undefined; }
-  bool IsString() const { return type == LocalType::String; }
+  void MarkAsFunctionArgument() { type = LocalType::FunctionArgument; }
+
+  bool CouldBeUndefined() const { return type == LocalType::Undefined || type == LocalType::FunctionArgument; }
+  bool CouldBeDefined() const { return type != LocalType::Undefined; };
+  bool CouldBeString() const { return type == LocalType::String || type == LocalType::String; }
 
   void Assign(LocalValue const& rhs, callback_t next) {
     LocalType const save_type = type;
@@ -132,6 +142,9 @@ struct LocalValue final {
   }
 
   LocalValue const& GetByKey(char const* key) {
+    if (type == LocalType::FunctionArgument) {
+      return StaticFunctionArgument();
+    }
     if (type != LocalType::Object) {
       // TODO(dkorolev): Message type, `file:row:col`.
       return StaticUndefined();
@@ -145,10 +158,12 @@ struct LocalValue final {
   }
 
   void SetValueForKey(char const* key, LocalValue const& value, callback_t next) {
-    if (type != LocalType::Object) {
+    if (type != LocalType::Object && type != LocalType::FunctionArgument) {
       // TODO(dkorolev): Message type, `file:row:col`.
       throw std::logic_error("Internal invariant failed.");
     }
+    auto const save_type = type;
+    type = LocalType::Object;
     if (object_keys.count(key)) {
       auto& placeholder = object_keys[key];
       auto const save = placeholder;
@@ -160,12 +175,15 @@ struct LocalValue final {
       next();
       object_keys.erase(key);
     }
+    type = save_type;
   }
 };
 
 inline std::ostream& operator<<(std::ostream& os, LocalValue const& value) {
   if (value.type == LocalType::Undefined) {
     os << "undefined";
+  } else if (value.type == LocalType::FunctionArgument) {
+    os << "function_argument";
   } else if (value.type == LocalType::Null) {
     os << "null";
   } else if (value.type == LocalType::String) {
@@ -265,7 +283,7 @@ IRStatement stmtAssignVarOnce(OPALocalWrapper source, OPALocalWrapper target) {
 IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) {
-        if (locals[target].IsUndefined()) {
+        if (locals[target].CouldBeUndefined()) {
           // TODO(dkorolev): Or is such a failure "breaking" the block?
           locals[target].Assign(source, next);
         } else {
@@ -283,7 +301,7 @@ IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target) {
 IRStatement stmtAssignVarOnce(OPABoolean source, OPALocalWrapper target) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) {
-        if (locals[target].IsUndefined()) {
+        if (locals[target].CouldBeUndefined()) {
           locals[target].Assign(source, next);
         } else {
           next();
@@ -318,7 +336,7 @@ IRStatement stmtEqual(OPALocalWrapper a, const char* b) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t done) {
         done();
-        if (locals[a].IsString()) {
+        if (locals[a].CouldBeString()) {
           // NOTE(dkorolev): No reason to move forward if the comparison is obviously false.
           next();
         }
@@ -333,7 +351,7 @@ IRStatement stmtEqual(OPALocalWrapper a, const char* b) {
 IRStatement stmtIsDefined(OPALocalWrapper source) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t done) {
-        if (locals[source].IsUndefined()) {
+        if (locals[source].CouldBeDefined()) {
           next();
         } else {
           done();
@@ -349,7 +367,7 @@ IRStatement stmtIsDefined(OPALocalWrapper source) {
 IRStatement stmtIsUndefined(OPALocalWrapper source) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t done) {
-        if (!locals[source].IsUndefined()) {
+        if (locals[source].CouldBeUndefined()) {
           next();
         } else {
           done();
