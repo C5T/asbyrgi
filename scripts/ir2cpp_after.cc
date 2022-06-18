@@ -3,6 +3,19 @@ int main() {
   PopulatePolicy(policy);
   policy_singleton = &policy;
 
+#if 0
+  {
+    Locals locals;
+    policy.plans["main"](policy).analyze(
+        locals,
+        [&locals]() { std::cout << locals << locals << std::endl; },
+        [&locals]() {
+          std::cout << "// DONE?\n" << locals << std::endl;
+          throw std::logic_error("Internal invariant failed.");
+        });
+  }
+#endif
+
   for (size_t i = 0; i < policy.function_bodies.size(); ++i) {
     std::cout << "value_t function_" << i << "(";
     for (size_t j = 0u; j < policy.functions[i].size(); ++j) {
