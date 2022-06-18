@@ -1,6 +1,6 @@
+#include <cstdarg>
 #include <iostream>
 #include <map>
-#include <cstdarg>
 
 // TODO: Not a relative path, of course.
 #include "../current/blocks/json/json.h"
@@ -13,37 +13,25 @@ struct value_t final {
   value_t() : opa_value(JSONNull()) {}
   value_t(JSONValue opa_value) : opa_value(std::move(opa_value)) {}
 
-  void ResetToUndefined() {
-    opa_value = JSONNull();
-  }
+  void ResetToUndefined() { opa_value = JSONNull(); }
 
-  bool IsUndefined() const {
-    return Exists<JSONNull>(opa_value);
-  }
+  bool IsUndefined() const { return Exists<JSONNull>(opa_value); }
 
   bool IsString(char const* desired) const {
     return Exists<JSONString>(opa_value) && Value<JSONString>(opa_value).string == desired;
   }
 
-  void MakeObject() {
-    opa_value = JSONObject();
-  }
+  void MakeObject() { opa_value = JSONObject(); }
 
   void MakeNull() {
     opa_value = JSONNull();  // TODO: See above.
   }
 
-  void SetBoolean(bool value) {
-    opa_value = JSONBoolean(value);
-  }
+  void SetBoolean(bool value) { opa_value = JSONBoolean(value); }
 
-  void SetString(char const* value) {
-    opa_value = JSONString(value);
-  }
+  void SetString(char const* value) { opa_value = JSONString(value); }
 
-  void SetNumberFromString(char const* value) {
-    opa_value = JSONNumber(current::FromString<double>(value));
-  }
+  void SetNumberFromString(char const* value) { opa_value = JSONNumber(current::FromString<double>(value)); }
 
   value_t GetByKey(char const* key) {
     return Exists<JSONObject>(opa_value) ? Value<JSONObject>(opa_value)[key] : value_t();
@@ -96,9 +84,7 @@ inline value_t opa_range(value_t const& a, value_t const& b) {
 
 struct result_set_t final {
   std::vector<value_t> result_set;
-  void AddToResultSet(value_t value) {
-    result_set.push_back(std::move(value));
-  }
+  void AddToResultSet(value_t value) { result_set.push_back(std::move(value)); }
   JSONValue pack() const {
     if (result_set.empty()) {
       return JSONNull();
