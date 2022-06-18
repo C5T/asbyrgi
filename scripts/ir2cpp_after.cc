@@ -16,12 +16,12 @@ int main() {
       std::cout << "locals[" << policy.functions[i][j] << "] = p" << j + 1u << ";\n";
     }
     std::cout << "value_t retval; \n";
-    policy.function_bodies[i](policy)([]() {});
+    policy.function_bodies[i](policy).dump([]() {});
     std::cout << "return retval; }\n";
   }
 
   std::cout << "result_set_t policy(value_t input, value_t data) {\n";
   std::cout << "locals_t locals; locals[0] = input; locals[1] = data; result_set_t result;\n";
-  policy.plans["main"](policy)([]() {});
+  policy.plans["main"](policy).dump([]() {});
   std::cout << "return result; }\n";
 }
