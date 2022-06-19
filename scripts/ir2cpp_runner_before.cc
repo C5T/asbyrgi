@@ -136,5 +136,3 @@ struct result_set_t final {
     }
   }
 };
-
-using locals_t = std::map<size_t, value_t>;

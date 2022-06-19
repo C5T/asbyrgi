@@ -238,10 +238,21 @@ struct Locals final {
   }
 };
 
+struct OutputVarState final {
+  bool declared = false;
+  std::string name;
+  bool certainly_undefined = true;
+  OutputVarState() = default;
+  OutputVarState(std::string name, bool undefined = true)
+      : declared(true), name(std::move(name)), certainly_undefined(undefined) {}
+  operator bool() const { return declared; }
+};
+
 struct OutputVarsState final {
-  std::map<size_t, std::string> var_name;
-  size_t vars_count = 0u;
+  std::map<size_t, OutputVarState> var;
+  size_t vars_declared = 0u;
   std::set<std::string> all;
+  OutputVarState& operator[](OPALocalWrapper local) { return var[local.local]; }
 };
 
 struct DeferClosingBrace final {};
@@ -301,55 +312,55 @@ struct OutputHierarchy final {
     if (initializer.empty()) {
       throw std::logic_error("Internal invariant failed.");
     }
-    std::string& var_name_placeholder = vars.var_name[var.local];
-    if (var_name_placeholder.empty()) {
+    OutputVarState& var_placeholder = vars[var];
+    if (!var_placeholder) {
       std::ostringstream os;
-      os << 'x' << ++vars.vars_count;
-      var_name_placeholder = os.str();
-      vars.all.insert(var_name_placeholder);
+      os << 'x' << ++vars.vars_declared;  // TODO(dkorolev): Need a helper function here.
+      var_placeholder = OutputVarState(os.str());
+      vars.all.insert(var_placeholder.name);  // TODO(dkorolev): Need a helper function here.
     }
-    AppendStatement() << var_name_placeholder << '=' << initializer << ';';
+    AppendStatement() << var_placeholder.name << '=' << initializer << ';';
   }
 
   void AppendIntroduceOrInitialize(OPALocalWrapper var, OPALocalWrapper initializer) {
-    if (vars.var_name[initializer.local].empty()) {
+    if (!vars[initializer]) {
       throw std::logic_error("Internal invariant failed.");
     }
-    std::string& var_name_placeholder = vars.var_name[var.local];
-    if (var_name_placeholder.empty()) {
+    OutputVarState& var_placeholder = vars[var];
+    if (!var_placeholder) {
       std::ostringstream os;
-      os << 'x' << ++vars.vars_count;
-      var_name_placeholder = os.str();
-      vars.all.insert(var_name_placeholder);
+      os << 'x' << ++vars.vars_declared;
+      var_placeholder = OutputVarState(os.str());  // TODO(dkorolev): Need a helper function here.
+      vars.all.insert(var_placeholder.name);
     }
-    AppendStatement() << var_name_placeholder << '=' << vars.var_name[initializer.local] << ';';
+    AppendStatement() << var_placeholder.name << '=' << vars[initializer].name << ';';
   }
 
   void AppendInitializeIfUndefined(OPALocalWrapper var, std::string const& initializer) {
-    std::string& var_name_placeholder = vars.var_name[var.local];
-    if (var_name_placeholder.empty()) {
+    OutputVarState& var_placeholder = vars[var];
+    if (var_placeholder.name.empty()) {
       std::ostringstream os;
-      os << 'x' << ++vars.vars_count;
-      var_name_placeholder = os.str();
-      vars.all.insert(var_name_placeholder);
-      AppendStatement() << var_name_placeholder << '=' << initializer << ';';
+      os << 'x' << ++vars.vars_declared;
+      var_placeholder = OutputVarState(os.str());  // TODO(dkorolev): Need a helper function here.
+      vars.all.insert(var_placeholder.name);
+      AppendStatement() << var_placeholder.name << '=' << initializer << ';';
     } else {
-      AppendStatement() << "if(" << var_name_placeholder << ".IsUndefined()){" << var_name_placeholder << '='
+      AppendStatement() << "if(" << var_placeholder.name << ".IsUndefined()){" << var_placeholder.name << '='
                         << initializer << ";}";
     }
   }
 
   void AppendInitializeIfUndefined(OPALocalWrapper var, OPALocalWrapper initializer) {
-    std::string& var_name_placeholder = vars.var_name[var.local];
-    if (var_name_placeholder.empty()) {
+    OutputVarState& var_placeholder = vars[var];
+    if (var_placeholder.name.empty()) {
       std::ostringstream os;
-      os << 'x' << ++vars.vars_count;
-      var_name_placeholder = os.str();
-      vars.all.insert(var_name_placeholder);
-      AppendStatement() << var_name_placeholder << '=' << vars.var_name[initializer.local] << ';';
+      os << 'x' << ++vars.vars_declared;
+      var_placeholder = OutputVarState(os.str());  // TODO(dkorolev): Need a helper function here.
+      vars.all.insert(var_placeholder.name);
+      AppendStatement() << var_placeholder.name << '=' << vars[initializer].name << ';';
     } else {
-      AppendStatement() << "if(" << var_name_placeholder << ".IsUndefined()){" << var_name_placeholder << '='
-                        << vars.var_name[initializer.local] << ";}";
+      AppendStatement() << "if(" << var_placeholder.name << ".IsUndefined()){" << var_placeholder.name << '='
+                        << vars[initializer].name << ";}";
     }
   }
 
@@ -364,13 +375,12 @@ struct OutputHierarchy final {
   }
 
   std::string Materialize(OPALocalWrapper var) {
-    // TODO(dkorolev): Remove this WIP rudiment.
-    if (vars.var_name[var.local].empty()) {
+    if (vars[var].name.empty()) {
       std::ostringstream os;
       os << "WTF[" << var.local << "]";
       return os.str();
     }
-    return vars.var_name[var.local];
+    return vars[var].name;
   }
 
   void TopDownPrint(std::ostream& os) const {
@@ -421,7 +431,7 @@ struct Output final {
     for (size_t j = 0u; j < args.size(); ++j) {
       std::ostringstream os;
       os << 'p' << j + 1u;
-      vars.var_name[args[j]] = os.str();
+      vars[OPALocalWrapper(args[j])] = OutputVarState(os.str(), false);
     }
     os << "value_t retval;";
     at_end = "return retval;}";
@@ -430,8 +440,8 @@ struct Output final {
   struct ForPlan final {};
   Output(std::ostream& os, ForPlan) : os(os), root(OutputHierarchy::OutputHierarchyBlock(), vars), current(&root) {
     os << "result_set_t policy(value_t input,value_t data){result_set_t result;";
-    vars.var_name[0] = "input";
-    vars.var_name[1] = "data";
+    vars[OPALocalWrapper(0)] = OutputVarState("input", false);
+    vars[OPALocalWrapper(1)] = OutputVarState("data", false);
     at_end = "return result;}";
   }
 
