@@ -239,13 +239,11 @@ struct Locals final {
 };
 
 struct OutputVarState final {
-  bool declared = false;
+  bool valid = false;
   std::string name;
   bool certainly_undefined = true;
   OutputVarState() = default;
-  OutputVarState(std::string name, bool undefined = true)
-      : declared(true), name(std::move(name)), certainly_undefined(undefined) {}
-  operator bool() const { return declared; }
+  operator bool() const { return valid; }
 };
 
 struct OutputVarsState final {
@@ -253,6 +251,28 @@ struct OutputVarsState final {
   size_t vars_declared = 0u;
   std::set<std::string> all;
   OutputVarState& operator[](OPALocalWrapper local) { return var[local.local]; }
+  std::pair<std::string, bool> DeclareVarIfUndeclared(OPALocalWrapper local) {
+    bool just_created = false;
+    OutputVarState& placeholder = (*this)[local];
+    if (!placeholder) {
+      std::ostringstream os;
+      os << 'x' << ++vars_declared;  // TODO(dkorolev): Need a helper function here.
+      placeholder.valid = true;
+      placeholder.name = os.str();
+      all.insert(placeholder.name);  // TODO(dkorolev): Need a helper function here.
+      just_created = true;
+    }
+    return std::make_pair(placeholder.name, just_created);
+  }
+
+  void ImportVar(OPALocalWrapper local, std::string name) {
+    OutputVarState& placeholder = (*this)[local];
+    if (placeholder.valid) {
+      throw std::logic_error("Internal invariant failed.");
+    }
+    placeholder.valid = true;
+    placeholder.name = std::move(name);
+  }
 };
 
 struct DeferClosingBrace final {};
@@ -312,55 +332,41 @@ struct OutputHierarchy final {
     if (initializer.empty()) {
       throw std::logic_error("Internal invariant failed.");
     }
-    OutputVarState& var_placeholder = vars[var];
-    if (!var_placeholder) {
-      std::ostringstream os;
-      os << 'x' << ++vars.vars_declared;  // TODO(dkorolev): Need a helper function here.
-      var_placeholder = OutputVarState(os.str());
-      vars.all.insert(var_placeholder.name);  // TODO(dkorolev): Need a helper function here.
-    }
-    AppendStatement() << var_placeholder.name << '=' << initializer << ';';
+    std::string const var_name = vars.DeclareVarIfUndeclared(var).first;
+    AppendStatement() << var_name << '=' << initializer << ';';
   }
 
   void AppendIntroduceOrInitialize(OPALocalWrapper var, OPALocalWrapper initializer) {
     if (!vars[initializer]) {
       throw std::logic_error("Internal invariant failed.");
     }
-    OutputVarState& var_placeholder = vars[var];
-    if (!var_placeholder) {
-      std::ostringstream os;
-      os << 'x' << ++vars.vars_declared;
-      var_placeholder = OutputVarState(os.str());  // TODO(dkorolev): Need a helper function here.
-      vars.all.insert(var_placeholder.name);
-    }
-    AppendStatement() << var_placeholder.name << '=' << vars[initializer].name << ';';
+    std::string const var_name = vars.DeclareVarIfUndeclared(var).first;
+    AppendStatement() << var_name << '=' << vars[initializer].name << ';';
   }
 
   void AppendInitializeIfUndefined(OPALocalWrapper var, std::string const& initializer) {
-    OutputVarState& var_placeholder = vars[var];
-    if (var_placeholder.name.empty()) {
-      std::ostringstream os;
-      os << 'x' << ++vars.vars_declared;
-      var_placeholder = OutputVarState(os.str());  // TODO(dkorolev): Need a helper function here.
-      vars.all.insert(var_placeholder.name);
-      AppendStatement() << var_placeholder.name << '=' << initializer << ';';
+    if (initializer.empty()) {
+      throw std::logic_error("Internal invariant failed.");
+    }
+    auto var_ref = vars.DeclareVarIfUndeclared(var);
+    std::string const var_name = var_ref.first;
+    if (var_ref.second) {
+      AppendStatement() << var_name << '=' << initializer << ';';
     } else {
-      AppendStatement() << "if(" << var_placeholder.name << ".IsUndefined()){" << var_placeholder.name << '='
-                        << initializer << ";}";
+      AppendStatement() << "if(" << var_name << ".IsUndefined()){" << var_name << '=' << initializer << ";}";
     }
   }
 
   void AppendInitializeIfUndefined(OPALocalWrapper var, OPALocalWrapper initializer) {
-    OutputVarState& var_placeholder = vars[var];
-    if (var_placeholder.name.empty()) {
-      std::ostringstream os;
-      os << 'x' << ++vars.vars_declared;
-      var_placeholder = OutputVarState(os.str());  // TODO(dkorolev): Need a helper function here.
-      vars.all.insert(var_placeholder.name);
-      AppendStatement() << var_placeholder.name << '=' << vars[initializer].name << ';';
+    if (!vars[initializer]) {
+      throw std::logic_error("Internal invariant failed.");
+    }
+    auto var_ref = vars.DeclareVarIfUndeclared(var);
+    std::string const var_name = var_ref.first;
+    if (var_ref.second) {
+      AppendStatement() << var_name << '=' << vars[initializer].name << ';';
     } else {
-      AppendStatement() << "if(" << var_placeholder.name << ".IsUndefined()){" << var_placeholder.name << '='
-                        << vars[initializer].name << ";}";
+      AppendStatement() << "if(" << var_name << ".IsUndefined()){" << var_name << '=' << vars[initializer].name << ";}";
     }
   }
 
@@ -409,10 +415,9 @@ struct OutputHierarchy final {
 struct Output final {
   Output() = delete;
 
+  OutputVarsState vars;
   std::ostream& os;
   std::string at_end;
-
-  OutputVarsState vars;
 
   OutputHierarchy root;
   OutputHierarchy* current;
@@ -431,7 +436,7 @@ struct Output final {
     for (size_t j = 0u; j < args.size(); ++j) {
       std::ostringstream os;
       os << 'p' << j + 1u;
-      vars[OPALocalWrapper(args[j])] = OutputVarState(os.str(), false);
+      vars.ImportVar(OPALocalWrapper(args[j]), os.str());
     }
     os << "value_t retval;";
     at_end = "return retval;}";
@@ -440,8 +445,8 @@ struct Output final {
   struct ForPlan final {};
   Output(std::ostream& os, ForPlan) : os(os), root(OutputHierarchy::OutputHierarchyBlock(), vars), current(&root) {
     os << "result_set_t policy(value_t input,value_t data){result_set_t result;";
-    vars[OPALocalWrapper(0)] = OutputVarState("input", false);
-    vars[OPALocalWrapper(1)] = OutputVarState("data", false);
+    vars.ImportVar(OPALocalWrapper(0), "input");
+    vars.ImportVar(OPALocalWrapper(1), "data");
     at_end = "return result;}";
   }
 
