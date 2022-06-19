@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 #include <memory>
+#include <set>
 #include <sstream>
 #include <vector>
 
@@ -237,18 +238,11 @@ struct Locals final {
   }
 };
 
-inline std::ostream& operator<<(std::ostream& os, Locals const& locals) {
-  for (auto const& e : locals.values) {
-    os << "// locals[" << e.first << "]: " << e.second << std::endl;
-  }
-  for (auto const& e : locals.result_sets) {
-    os << "// result: " << e << std::endl;
-  }
-  if (locals.return_value.type != LocalType::Unspecified) {
-    os << "// return: " << locals.return_value << std::endl;
-  }
-  return os;
-}
+struct OutputVarsState final {
+  std::map<size_t, std::string> var_name;
+  size_t vars_count = 0u;
+  std::set<std::string> all;
+};
 
 struct DeferClosingBrace final {};
 
@@ -256,6 +250,8 @@ enum class OutputHierarchyType : int { Break = 0, Statement = 1, Block = 2 };
 
 struct OutputHierarchy final {
   OutputHierarchyType type;
+  OutputVarsState& vars;
+
   std::string stmt;
   std::vector<std::unique_ptr<OutputHierarchy>> children;
   bool defer_closing_brace = false;
@@ -266,16 +262,17 @@ struct OutputHierarchy final {
   struct OutputHierarchyStatement final {};
   struct OutputHierarchyBlock final {};
 
-  explicit OutputHierarchy(OutputHierarchyBreak) : type(OutputHierarchyType::Break) {}
-  explicit OutputHierarchy(OutputHierarchyStatement) : type(OutputHierarchyType::Statement) {}
-  explicit OutputHierarchy(OutputHierarchyBlock) : type(OutputHierarchyType::Block) {}
+  OutputHierarchy(OutputHierarchyBreak, OutputVarsState& vars) : type(OutputHierarchyType::Break), vars(vars) {}
+  OutputHierarchy(OutputHierarchyStatement, OutputVarsState& vars) : type(OutputHierarchyType::Statement), vars(vars) {}
+  OutputHierarchy(OutputHierarchyBlock, OutputVarsState& vars) : type(OutputHierarchyType::Block), vars(vars) {}
 
   struct StatementInProgress final {
+    OutputVarsState& vars;
     std::string& destination;
     std::ostringstream os;
     bool& defer_closing_brace;
-    StatementInProgress(std::string& destination, bool& defer_closing_brace)
-        : destination(destination), defer_closing_brace(defer_closing_brace) {}
+    StatementInProgress(OutputVarsState& vars, std::string& destination, bool& defer_closing_brace)
+        : vars(vars), destination(destination), defer_closing_brace(defer_closing_brace) {}
     ~StatementInProgress() { destination = os.str(); }
     template <typename T>
     StatementInProgress& operator<<(T&& x) {
@@ -289,16 +286,92 @@ struct OutputHierarchy final {
   };
 
   StatementInProgress AppendStatement() {
-    children.emplace_back(std::make_unique<OutputHierarchy>(OutputHierarchyStatement()));
-    return StatementInProgress(children.back()->stmt, children.back()->defer_closing_brace);
+    children.emplace_back(std::make_unique<OutputHierarchy>(OutputHierarchyStatement(), vars));
+    return StatementInProgress(vars, children.back()->stmt, children.back()->defer_closing_brace);
   }
 
   OutputHierarchy* AppendBlock() {
-    children.emplace_back(std::make_unique<OutputHierarchy>(OutputHierarchyBlock()));
+    children.emplace_back(std::make_unique<OutputHierarchy>(OutputHierarchyBlock(), vars));
     return children.back().get();
   }
 
-  void AppendBreak() { children.emplace_back(std::make_unique<OutputHierarchy>(OutputHierarchyBreak())); }
+  void AppendBreak() { children.emplace_back(std::make_unique<OutputHierarchy>(OutputHierarchyBreak(), vars)); }
+
+  void AppendIntroduceOrInitialize(OPALocalWrapper var, std::string const& initializer) {
+    if (initializer.empty()) {
+      throw std::logic_error("Internal invariant failed.");
+    }
+    std::string& var_name_placeholder = vars.var_name[var.local];
+    if (var_name_placeholder.empty()) {
+      std::ostringstream os;
+      os << 'x' << ++vars.vars_count;
+      var_name_placeholder = os.str();
+      vars.all.insert(var_name_placeholder);
+    }
+    AppendStatement() << var_name_placeholder << '=' << initializer << ';';
+  }
+
+  void AppendIntroduceOrInitialize(OPALocalWrapper var, OPALocalWrapper initializer) {
+    if (vars.var_name[initializer.local].empty()) {
+      throw std::logic_error("Internal invariant failed.");
+    }
+    std::string& var_name_placeholder = vars.var_name[var.local];
+    if (var_name_placeholder.empty()) {
+      std::ostringstream os;
+      os << 'x' << ++vars.vars_count;
+      var_name_placeholder = os.str();
+      vars.all.insert(var_name_placeholder);
+    }
+    AppendStatement() << var_name_placeholder << '=' << vars.var_name[initializer.local] << ';';
+  }
+
+  void AppendInitializeIfUndefined(OPALocalWrapper var, std::string const& initializer) {
+    std::string& var_name_placeholder = vars.var_name[var.local];
+    if (var_name_placeholder.empty()) {
+      std::ostringstream os;
+      os << 'x' << ++vars.vars_count;
+      var_name_placeholder = os.str();
+      vars.all.insert(var_name_placeholder);
+      AppendStatement() << var_name_placeholder << '=' << initializer << ';';
+    } else {
+      AppendStatement() << "if(" << var_name_placeholder << ".IsUndefined()){" << var_name_placeholder << '='
+                        << initializer << ";}";
+    }
+  }
+
+  void AppendInitializeIfUndefined(OPALocalWrapper var, OPALocalWrapper initializer) {
+    std::string& var_name_placeholder = vars.var_name[var.local];
+    if (var_name_placeholder.empty()) {
+      std::ostringstream os;
+      os << 'x' << ++vars.vars_count;
+      var_name_placeholder = os.str();
+      vars.all.insert(var_name_placeholder);
+      AppendStatement() << var_name_placeholder << '=' << vars.var_name[initializer.local] << ';';
+    } else {
+      AppendStatement() << "if(" << var_name_placeholder << ".IsUndefined()){" << var_name_placeholder << '='
+                        << vars.var_name[initializer.local] << ";}";
+    }
+  }
+
+  void AppendAssignOrInitialize(OPALocalWrapper var, std::string const& initializer) {
+    // TODO(dkorolev): Remove this WIP rudiment.
+    AppendIntroduceOrInitialize(var, initializer);
+  }
+
+  void AppendAssignOrInitialize(OPALocalWrapper var, OPALocalWrapper initializer) {
+    // TODO(dkorolev): Remove this WIP rudiment.
+    AppendIntroduceOrInitialize(var, initializer);
+  }
+
+  std::string Materialize(OPALocalWrapper var) {
+    // TODO(dkorolev): Remove this WIP rudiment.
+    if (vars.var_name[var.local].empty()) {
+      std::ostringstream os;
+      os << "WTF[" << var.local << "]";
+      return os.str();
+    }
+    return vars.var_name[var.local];
+  }
 
   void TopDownPrint(std::ostream& os) const {
     if (type == OutputHierarchyType::Block) {
@@ -329,12 +402,14 @@ struct Output final {
   std::ostream& os;
   std::string at_end;
 
+  OutputVarsState vars;
+
   OutputHierarchy root;
   OutputHierarchy* current;
 
   struct ForFunction final {};
   Output(std::ostream& os, ForFunction, size_t index, std::vector<size_t> const& args)
-      : os(os), root(OutputHierarchy::OutputHierarchyBlock()), current(&root) {
+      : os(os), root(OutputHierarchy::OutputHierarchyBlock(), vars), current(&root) {
     os << "value_t function_" << index << "(";
     for (size_t j = 0u; j < args.size(); ++j) {
       if (j) {
@@ -342,116 +417,148 @@ struct Output final {
       }
       os << "value_t p" << j + 1u;
     }
-    os << "){locals_t locals;";
+    os << "){";
     for (size_t j = 0u; j < args.size(); ++j) {
-      os << "locals[" << args[j] << "]=p" << j + 1u << ";";
+      std::ostringstream os;
+      os << 'p' << j + 1u;
+      vars.var_name[args[j]] = os.str();
     }
     os << "value_t retval;";
     at_end = "return retval;}";
   }
 
   struct ForPlan final {};
-  Output(std::ostream& os, ForPlan) : os(os), root(OutputHierarchy::OutputHierarchyBlock()), current(&root) {
-    os << "result_set_t policy(value_t input,value_t data){";
-    os << "locals_t locals;locals[0]=input;locals[1]=data;result_set_t result;";
+  Output(std::ostream& os, ForPlan) : os(os), root(OutputHierarchy::OutputHierarchyBlock(), vars), current(&root) {
+    os << "result_set_t policy(value_t input,value_t data){result_set_t result;";
+    vars.var_name[0] = "input";
+    vars.var_name[1] = "data";
     at_end = "return result;}";
   }
 
   ~Output() {
+    if (!vars.all.empty()) {
+      bool first = true;
+      os << "value_t ";
+      for (auto const& v : vars.all) {
+        if (first) {
+          first = false;
+        } else {
+          os << ',';
+        }
+        os << v;
+      }
+      os << ';';
+    }
     root.TopDownPrint(os);
     os << at_end;
   }
 
-  void ResetToUndefined(OPALocalWrapper source) {
-    current->AppendStatement() << "locals[" << source.local << "].ResetToUndefined();";
+  void ResetToUndefined(OPALocalWrapper source) { current->AppendIntroduceOrInitialize(source, "ResetToUndefined()"); }
+
+  void IsDefined(OPALocalWrapper value) {
+    std::string const materialized_value = current->Materialize(value);
+    current->AppendStatement() << "if(!" << materialized_value << ".IsUndefined()){" << DeferClosingBrace();
   }
 
-  void IsDefined(OPALocalWrapper source) {
-    current->AppendStatement() << "if(!locals[" << source.local << "].IsUndefined()){" << DeferClosingBrace();
+  void IsUndefined(OPALocalWrapper value) {
+    std::string const materialized_value = current->Materialize(value);
+    current->AppendStatement() << "if(" << materialized_value << ".IsUndefined()){" << DeferClosingBrace();
   }
 
-  void IsUndefined(OPALocalWrapper source) {
-    current->AppendStatement() << "if(locals[" << source.local << "].IsUndefined()){" << DeferClosingBrace();
-  }
+  void MakeNull(OPALocalWrapper target) { current->AppendIntroduceOrInitialize(target, "MakeNull()"); }
 
-  void MakeNull(OPALocalWrapper target) { current->AppendStatement() << "locals[" << target.local << "].MakeNull();"; }
-
-  void MakeObject(OPALocalWrapper target) {
-    current->AppendStatement() << "locals[" << target.local << "].MakeObject();";
-  }
+  void MakeObject(OPALocalWrapper target) { current->AppendIntroduceOrInitialize(target, "MakeObject()"); }
   void MakeNumberRef(OPALocalWrapper target, std::string const& s) {
-    current->AppendStatement() << "locals[" << target.local << "].SetNumberFromString(\"" << s << "\");";
+    std::ostringstream os;
+    os << "SetNumberFromString(\"" << s << "\")";
+    current->AppendIntroduceOrInitialize(target, os.str());
   }
 
-  void AssignVar(OPALocalWrapper source, OPALocalWrapper target) {
-    current->AppendStatement() << "locals[" << target.local << "] = locals[" << source.local << "];";
-  }
+  void AssignVar(OPALocalWrapper source, OPALocalWrapper target) { current->AppendAssignOrInitialize(target, source); }
   void AssignVar(char const* s, OPALocalWrapper target) {
-    current->AppendStatement() << "locals[" << target.local << "] = \"" << s << "\"";
+    std::ostringstream os;
+    os << "SetString(\"" << s << "\")";
+    current->AppendAssignOrInitialize(target, os.str());
   }
   void AssignVar(OPABoolean source, OPALocalWrapper target) {
-    current->AppendStatement() << "locals[" << target.local << "].SetBoolean(" << std::boolalpha << source.boolean
-                               << ");\n";
+    std::ostringstream os;
+    os << "SetBoolean(" << std::boolalpha << source.boolean << ')';
+    current->AppendAssignOrInitialize(target, os.str());
   }
 
   void AssignVarOnce(OPALocalWrapper source, OPALocalWrapper target) {
-    current->AppendStatement() << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local
-                               << "] = locals[" << source.local << "];}";
+    current->AppendInitializeIfUndefined(target, source);
   }
   void AssignVarOnce(char const* s, OPALocalWrapper target) {
-    current->AppendStatement() << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local
-                               << "] = \"" << s << "\";}";
+    std::ostringstream os;
+    os << "SetString(\"" << s << "\")";
+    current->AppendInitializeIfUndefined(target, os.str());
   }
   void AssignVarOnce(OPABoolean source, OPALocalWrapper target) {
-    current->AppendStatement() << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local
-                               << "].SetBoolean(" << std::boolalpha << source.boolean << ");}";
+    std::ostringstream os;
+    os << "SetBoolean(" << std::boolalpha << source.boolean << ')';
+    current->AppendInitializeIfUndefined(target, os.str());
   }
 
-  void Equal(OPALocalWrapper local, char const* s) {
-    current->AppendStatement() << "if (locals[" << local.local << "].IsString(\"" << s << "\")){"
-                               << DeferClosingBrace();
+  void Equal(OPALocalWrapper value, char const* s) {
+    std::string const materialized_value = current->Materialize(value);
+    current->AppendStatement() << "if (" << materialized_value << ".IsString(\"" << s << "\")){" << DeferClosingBrace();
   }
 
   void Dot(OPALocalWrapper target, OPALocalWrapper source, char const* key) {
-    current->AppendStatement() << "locals[" << target.local << "] = locals[" << source.local << "].GetByKey(\"" << key
-                               << "\");";
+    std::ostringstream os;
+    os << current->Materialize(source) << ".GetByKey(\"" << key << "\")";
+    current->AppendAssignOrInitialize(target, os.str());
   }
 
   void ObjectInsert(char const* key, OPALocalWrapper value, OPALocalWrapper object) {
-    current->AppendStatement() << "locals[" << object.local << "].SetValueForKey(\"" << key << "\", locals["
-                               << value.local << "]);";
+    std::string const materialized_value = current->Materialize(value);
+    current->AppendStatement() << current->Materialize(object) << ".SetValueForKey(\"" << key << "\", "
+                               << materialized_value << ");";
   }
 
   void Call(OPALocalWrapper target, OPAUserDefinedFunction f, std::vector<OPALocalWrapper> const& args) {
-    auto stmt = current->AppendStatement();
-    stmt << "locals[" << target.local << "] = function_" << f.function << "(";
+    std::vector<std::string> materialized_args(args.size());
+    for (size_t i = 0u; i < args.size(); ++i) {
+      materialized_args[i] = current->Materialize(args[i]);
+    }
+    std::ostringstream os;
+    os << "function_" << f.function << '(';
     for (size_t i = 0u; i < args.size(); ++i) {
       if (i) {
-        stmt << ", ";
+        os << ',';
       }
-      stmt << "locals[" << args[i].local << "]";
+      os << materialized_args[i];
     }
-    stmt << ");";
+    os << ')';
+    current->AppendAssignOrInitialize(target, os.str());
   }
 
   void Call(OPALocalWrapper target, OPABuiltin f, std::vector<OPALocalWrapper> const& args) {
-    auto stmt = current->AppendStatement();
-    stmt << "locals[" << target.local << "] = " << f.builtin_name << "(";
+    std::vector<std::string> materialized_args(args.size());
+    for (size_t i = 0u; i < args.size(); ++i) {
+      materialized_args[i] = current->Materialize(args[i]);
+    }
+    std::ostringstream os;
+    os << f.builtin_name << '(';
     for (size_t i = 0u; i < args.size(); ++i) {
       if (i) {
-        stmt << ", ";
+        os << ',';
       }
-      stmt << "locals[" << args[i].local << "]";
+      os << materialized_args[i];
     }
-    stmt << ");";
+    os << ')';
+    current->AppendAssignOrInitialize(target, os.str());
   }
 
   void AddToResultsSet(OPALocalWrapper value) {
-    current->AppendStatement() << "result.AddToResultSet(locals[" << value.local << "]);\n";
+    std::string const materialized_value = current->Materialize(value);
+    current->AppendStatement() << "result.AddToResultSet(" << materialized_value << ");";
   }
 
-  void SetReturnValue(OPALocalWrapper source) {
-    current->AppendStatement() << "retval = locals[" << source.local << "];\n";
+  void SetReturnValue(OPALocalWrapper value) {
+    std::string const materialized_value = current->Materialize(value);
+    current->AppendStatement() << "retval=" << materialized_value << ';';
   }
 
   void Break() { current->AppendBreak(); }
@@ -467,14 +574,11 @@ struct Output final {
 struct IRStatement final {
   using analyze_t = std::function<void(Locals&, callback_t next, callback_t done)>;
   using output_t = std::function<void(Output&)>;
-  using dump_t = std::function<void(callback_t)>;
   analyze_t analyze;
   output_t output;
-  dump_t dump;
-  IRStatement(analyze_t analyze, output_t output, dump_t dump) : analyze(analyze), output(output), dump(dump) {}
+  IRStatement(analyze_t analyze, output_t output) : analyze(analyze), output(output) {}
   static IRStatement Dummy() {
-    return IRStatement(
-        [](Locals&, callback_t, callback_t) {}, [](Output& callback_t) {}, [](callback_t next) { next(); });
+    return IRStatement([](Locals&, callback_t, callback_t) {}, [](Output& callback_t) {});
   }
 };
 
@@ -491,13 +595,7 @@ inline static Policy* policy_singleton;
 
 IRStatement stmtAssignVarOnce(OPALocalWrapper source, OPALocalWrapper target) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].Assign(locals[source], next); },
-                     [=](Output& output) { output.AssignVarOnce(source, target); },
-                     [=](callback_t next) {
-                       std::cout << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local
-                                 << "] = locals[" << source.local << "];\n";
-                       next();
-                       std::cout << "}\n";
-                     });
+                     [=](Output& output) { output.AssignVarOnce(source, target); });
 }
 
 IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target) {
@@ -510,13 +608,7 @@ IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target) {
           next();
         }
       },
-      [=](Output& output) { output.AssignVarOnce(source, target); },
-      [=](callback_t next) {
-        std::cout << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local << "].SetString(\""
-                  << source << "\");\n";
-        next();
-        std::cout << "}\n";
-      });
+      [=](Output& output) { output.AssignVarOnce(source, target); });
 }
 
 IRStatement stmtAssignVarOnce(OPABoolean source, OPALocalWrapper target) {
@@ -528,33 +620,18 @@ IRStatement stmtAssignVarOnce(OPABoolean source, OPALocalWrapper target) {
           next();
         }
       },
-      [=](Output& output) { output.AssignVarOnce(source, target); },
-      [=](callback_t next) {
-        // TODO(dkorolev): When to break?
-        std::cout << "if (locals[" << target.local << "].IsUndefined()) { locals[" << target.local << "].SetBoolean("
-                  << std::boolalpha << source.boolean << ");\n";
-        next();
-        std::cout << "}\n";
-      });
+      [=](Output& output) { output.AssignVarOnce(source, target); });
 }
 
 IRStatement stmtAssignVar(OPALocalWrapper source, OPALocalWrapper target) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].Assign(locals[source], next); },
-                     [=](Output& output) { output.AssignVar(source, target); },
-                     [=](callback_t next) {
-                       std::cout << "locals[" << target.local << "] = locals[" << source.local << "];\n";
-                       next();
-                     });
+                     [=](Output& output) { output.AssignVar(source, target); });
 }
 
 IRStatement stmtDot(OPALocalWrapper source, char const* key, OPALocalWrapper target) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) { locals[target].Assign(locals[source].GetByKey(key), next); },
-      [=](Output& output) { output.Dot(target, source, key); },
-      [=](callback_t next) {
-        std::cout << "locals[" << target.local << "] = locals[" << source.local << "].GetByKey(\"" << key << "\");";
-        next();
-      });
+      [=](Output& output) { output.Dot(target, source, key); });
 }
 
 IRStatement stmtEqual(OPALocalWrapper a, const char* b) {
@@ -566,12 +643,7 @@ IRStatement stmtEqual(OPALocalWrapper a, const char* b) {
           next();
         }
       },
-      [=](Output& output) { output.Equal(a, b); },
-      [=](callback_t next) {
-        std::cout << "if (locals[" << a.local << "].IsString(\"" << b << "\")) {\n";
-        next();
-        std::cout << "}\n";
-      });
+      [=](Output& output) { output.Equal(a, b); });
 }
 
 IRStatement stmtIsDefined(OPALocalWrapper source) {
@@ -583,12 +655,7 @@ IRStatement stmtIsDefined(OPALocalWrapper source) {
           done();
         }
       },
-      [=](Output& output) { output.IsDefined(source); },
-      [=](callback_t next) {
-        std::cout << "if (!locals[" << source.local << "].IsUndefined()) {\n";
-        next();
-        std::cout << "}\n";
-      });
+      [=](Output& output) { output.IsDefined(source); });
 }
 
 IRStatement stmtIsUndefined(OPALocalWrapper source) {
@@ -600,21 +667,12 @@ IRStatement stmtIsUndefined(OPALocalWrapper source) {
           done();
         }
       },
-      [=](Output& output) { output.IsUndefined(source); },
-      [=](callback_t next) {
-        std::cout << "if (locals[" << source.local << "].IsUndefined()) {\n";
-        next();
-        std::cout << "}\n";
-      });
+      [=](Output& output) { output.IsUndefined(source); });
 }
 
 IRStatement stmtMakeNull(OPALocalWrapper target) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].MakeNull(next); },
-                     [=](Output& output) { output.MakeNull(target); },
-                     [=](callback_t next) {
-                       std::cout << "locals[" << target.local << "].MakeNull();\n";
-                       next();
-                     });
+                     [=](Output& output) { output.MakeNull(target); });
 }
 
 IRStatement stmtMakeNumberRef(OPAStringConstant value, OPALocalWrapper target) {
@@ -622,56 +680,33 @@ IRStatement stmtMakeNumberRef(OPAStringConstant value, OPALocalWrapper target) {
                      [=](Output& output) {
                        Policy const& policy = *policy_singleton;
                        output.MakeNumberRef(target, policy.strings[value.string_index]);
-                     },
-                     [=](callback_t next) {
-                       Policy const& policy = *policy_singleton;
-                       // TODO: Not `FromString`, of course.
-                       std::cout << "locals[" << target.local << "].SetNumberFromString(\""
-                                 << policy.strings[value.string_index] << "\");\n";
-                       next();
                      });
 }
 
 IRStatement stmtMakeObject(OPALocalWrapper target) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].MakeObject(next); },
-                     [=](Output& output) { output.MakeObject(target); },
-                     [=](callback_t next) {
-                       std::cout << "locals[" << target.local << "].MakeObject();\n";
-                       next();
-                     });
+                     [=](Output& output) { output.MakeObject(target); });
 }
 
 // NOTE(dkorolev): This is a static, `constexpr`, "compile-time" check. It should not generate any output code.
 IRStatement stmtNotEqual(OPABoolean a, OPABoolean b) {
   if (a.boolean != b.boolean) {
     return IRStatement([=](Locals&, callback_t next, callback_t) { next(); },
-                       [=](Output&) {},  // NOTE(dkorolev: A no-op.
-                       [=](callback_t next) { next(); });
+                       [=](Output&) {});  // NOTE(dkorolev: A no-op.
   } else {
-    return IRStatement([=](Locals&, callback_t, callback_t done) { done(); },
-                       [=](Output& output) { output.Break(); },
-                       [=](callback_t) {});
+    return IRStatement([=](Locals&, callback_t, callback_t done) { done(); }, [=](Output& output) { output.Break(); });
   }
 }
 
 IRStatement stmtObjectInsert(char const* key, OPALocalWrapper value, OPALocalWrapper object) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) { locals[object].SetValueForKey(key, locals[value], next); },
-      [=](Output& output) { output.ObjectInsert(key, value, object); },
-      [=](callback_t next) {
-        std::cout << "locals[" << object.local << "].SetValueForKey(\"" << key << "\", locals[" << value.local
-                  << "]);\n";
-        next();
-      });
+      [=](Output& output) { output.ObjectInsert(key, value, object); });
 }
 
 IRStatement stmtResetLocal(OPALocalWrapper target) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].ResetToUndefined(next); },
-                     [=](Output& output) { output.ResetToUndefined(target); },
-                     [=](callback_t next) {
-                       std::cout << "locals[" << target.local << "].ResetToUndefined();\n";
-                       next();
-                     });
+                     [=](Output& output) { output.ResetToUndefined(target); });
 }
 
 IRStatement stmtResultSetAdd(OPALocalWrapper value) {
@@ -680,11 +715,7 @@ IRStatement stmtResultSetAdd(OPALocalWrapper value) {
         locals.AddToResultsSet(locals[value]);
         next();
       },
-      [=](Output& output) { output.AddToResultsSet(value); },
-      [=](callback_t next) {
-        std::cout << "result.AddToResultSet(locals[" << value.local << "]);\n";
-        next();
-      });
+      [=](Output& output) { output.AddToResultsSet(value); });
 }
 
 // TODO(dkorolev): Think deeper about "recursion" / `walk` in this aspect.
@@ -699,10 +730,6 @@ IRStatement stmtReturnLocalStmt(OPALocalWrapper source) {
         // TODO(dkorolev): Ask the OPA folks whether this should "return" or just save the return value. And is there
         // redundancy.
         output.SetReturnValue(source);
-      },
-      [=](callback_t next) {
-        std::cout << "retval = locals[" << source.local << "];\n";
-        next();
       });
 }
 
@@ -717,19 +744,7 @@ IRStatement stmtCall(OPAUserDefinedFunction f, std::vector<OPALocalWrapper> cons
         next();
         // TODO(dkorolev): Implement this.
       },
-      [=](Output& output) { output.Call(target, f, args); },
-      [=](callback_t next) {
-        std::cout << "locals[" << target.local << "] = function_" << f.function << "(";
-        for (size_t i = 0u; i < args.size(); ++i) {
-          if (i) {
-            std::cout << ", ";
-          }
-          std::cout << "locals[" << args[i].local << "]";
-        }
-        std::cout << ");\n";
-
-        next();
-      });
+      [=](Output& output) { output.Call(target, f, args); });
 }
 
 IRStatement stmtCall(OPABuiltin f, std::vector<OPALocalWrapper> const& args, OPALocalWrapper target) {
@@ -743,19 +758,7 @@ IRStatement stmtCall(OPABuiltin f, std::vector<OPALocalWrapper> const& args, OPA
         next();
         // TODO(dkorolev): Implement this.
       },
-      [=](Output& output) { output.Call(target, f, args); },
-      [=](callback_t next) {
-        std::cout << "locals[" << target.local << "] = " << f.builtin_name << "(";
-        for (size_t i = 0u; i < f.args_count; ++i) {
-          if (i) {
-            std::cout << ", ";
-          }
-          std::cout << "locals[" << args[i].local << "]";
-        }
-        std::cout << ");\n";
-
-        next();
-      });
+      [=](Output& output) { output.Call(target, f, args); });
 }
 
 IRStatement stmtBlock(std::vector<IRStatement> const& code) {
@@ -777,16 +780,5 @@ IRStatement stmtBlock(std::vector<IRStatement> const& code) {
         for (IRStatement const& stmt : code) {
           stmt.output(output);
         }
-      },
-      [=](callback_t next) {
-        if (!code.empty()) {
-          std::function<void(size_t)> doit = [&](size_t i) {
-            if (i < code.size()) {
-              code[i].dump([i, &doit]() { doit(i + 1u); });
-            }
-          };
-          doit(0u);
-        }
-        next();
       });
 }

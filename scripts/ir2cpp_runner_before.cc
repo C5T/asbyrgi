@@ -44,6 +44,33 @@ struct value_t final {
   }
 };
 
+inline value_t ResetToUndefined() { return value_t(); }
+inline value_t MakeNull() {
+  value_t res;
+  res.MakeNull();
+  return res;
+}
+inline value_t MakeObject() {
+  value_t res;
+  res.MakeObject();
+  return res;
+}
+inline value_t SetString(char const* s) {
+  value_t res;
+  res.SetString(s);
+  return res;
+}
+inline value_t SetBoolean(bool b) {
+  value_t res;
+  res.SetBoolean(b);
+  return res;
+}
+inline value_t SetNumberFromString(char const* s) {
+  value_t res;
+  res.SetNumberFromString(s);
+  return res;
+}
+
 inline value_t opa_plus(value_t const& a, value_t const& b) {
   if (Exists<JSONNumber>(a.opa_value) && Exists<JSONNumber>(b.opa_value)) {
     return value_t(JSONNumber(Value<JSONNumber>(a.opa_value).number + Value<JSONNumber>(b.opa_value).number));
