@@ -5,7 +5,6 @@
 #include <iostream>
 #include <map>
 #include <memory>
-#include <set>
 #include <sstream>
 #include <vector>
 
@@ -241,37 +240,39 @@ struct Locals final {
 struct OutputVarState final {
   bool valid = false;
   std::string name;
-  bool certainly_undefined = true;
-  OutputVarState() = default;
+  std::string type;
   operator bool() const { return valid; }
 };
 
 struct OutputVarsState final {
   std::map<size_t, OutputVarState> var;
   size_t vars_declared = 0u;
-  std::set<std::string> all;
+  std::vector<OPALocalWrapper> all_declarations;
   OutputVarState& operator[](OPALocalWrapper local) { return var[local.local]; }
-  std::pair<std::string, bool> DeclareVarIfUndeclared(OPALocalWrapper local) {
+  std::pair<std::string, bool> DeclareVarIfUndeclared(OPALocalWrapper local, std::string declare_type) {
     bool just_created = false;
     OutputVarState& placeholder = (*this)[local];
     if (!placeholder) {
+      // TODO(dkorolev): Need a helper function here.
       std::ostringstream os;
-      os << 'x' << ++vars_declared;  // TODO(dkorolev): Need a helper function here.
+      os << 'x' << ++vars_declared;
       placeholder.valid = true;
       placeholder.name = os.str();
-      all.insert(placeholder.name);  // TODO(dkorolev): Need a helper function here.
+      placeholder.type = std::move(declare_type);
+      all_declarations.push_back(local);
       just_created = true;
     }
     return std::make_pair(placeholder.name, just_created);
   }
 
-  void ImportVar(OPALocalWrapper local, std::string name) {
+  void ImportVar(OPALocalWrapper local, std::string name, std::string type) {
     OutputVarState& placeholder = (*this)[local];
     if (placeholder.valid) {
       throw std::logic_error("Internal invariant failed.");
     }
     placeholder.valid = true;
     placeholder.name = std::move(name);
+    placeholder.type = std::move(type);
   }
 };
 
@@ -328,56 +329,22 @@ struct OutputHierarchy final {
 
   void AppendBreak() { children.emplace_back(std::make_unique<OutputHierarchy>(OutputHierarchyBreak(), vars)); }
 
-  void AppendIntroduceOrInitialize(OPALocalWrapper var, std::string const& initializer) {
-    if (initializer.empty()) {
-      throw std::logic_error("Internal invariant failed.");
-    }
-    std::string const var_name = vars.DeclareVarIfUndeclared(var).first;
+  void DoAssignVar(OPALocalWrapper var,
+                   std::string const& initializer,
+                   std::string const& var_type_if_needed = "OPAValue") {
+    std::string const var_name = vars.DeclareVarIfUndeclared(var, var_type_if_needed).first;
     AppendStatement() << var_name << '=' << initializer << ';';
   }
-
-  void AppendIntroduceOrInitialize(OPALocalWrapper var, OPALocalWrapper initializer) {
-    if (!vars[initializer]) {
-      throw std::logic_error("Internal invariant failed.");
-    }
-    std::string const var_name = vars.DeclareVarIfUndeclared(var).first;
-    AppendStatement() << var_name << '=' << vars[initializer].name << ';';
-  }
-
-  void AppendInitializeIfUndefined(OPALocalWrapper var, std::string const& initializer) {
-    if (initializer.empty()) {
-      throw std::logic_error("Internal invariant failed.");
-    }
-    auto var_ref = vars.DeclareVarIfUndeclared(var);
+  void DoAssignVarOnce(OPALocalWrapper var,
+                       std::string const& initializer,
+                       std::string const& var_type_if_needed = "OPAValue") {
+    auto var_ref = vars.DeclareVarIfUndeclared(var, var_type_if_needed);
     std::string const var_name = var_ref.first;
     if (var_ref.second) {
       AppendStatement() << var_name << '=' << initializer << ';';
     } else {
-      AppendStatement() << "if(" << var_name << ".IsUndefined()){" << var_name << '=' << initializer << ";}";
+      AppendStatement() << "if(IsUndefined(" << var_name << ")){" << var_name << '=' << initializer << ";}";
     }
-  }
-
-  void AppendInitializeIfUndefined(OPALocalWrapper var, OPALocalWrapper initializer) {
-    if (!vars[initializer]) {
-      throw std::logic_error("Internal invariant failed.");
-    }
-    auto var_ref = vars.DeclareVarIfUndeclared(var);
-    std::string const var_name = var_ref.first;
-    if (var_ref.second) {
-      AppendStatement() << var_name << '=' << vars[initializer].name << ';';
-    } else {
-      AppendStatement() << "if(" << var_name << ".IsUndefined()){" << var_name << '=' << vars[initializer].name << ";}";
-    }
-  }
-
-  void AppendAssignOrInitialize(OPALocalWrapper var, std::string const& initializer) {
-    // TODO(dkorolev): Remove this WIP rudiment.
-    AppendIntroduceOrInitialize(var, initializer);
-  }
-
-  void AppendAssignOrInitialize(OPALocalWrapper var, OPALocalWrapper initializer) {
-    // TODO(dkorolev): Remove this WIP rudiment.
-    AppendIntroduceOrInitialize(var, initializer);
   }
 
   std::string Materialize(OPALocalWrapper var) {
@@ -425,110 +392,116 @@ struct Output final {
   struct ForFunction final {};
   Output(std::ostream& os, ForFunction, size_t index, std::vector<size_t> const& args)
       : os(os), root(OutputHierarchy::OutputHierarchyBlock(), vars), current(&root) {
-    os << "value_t function_" << index << "(";
+    os << "template <";
     for (size_t j = 0u; j < args.size(); ++j) {
       if (j) {
         os << ", ";
       }
-      os << "value_t p" << j + 1u;
+      os << "typename T" << j + 1u;
+    }
+    os << "> decltype(auto) function_" << index << "(";
+    for (size_t j = 0u; j < args.size(); ++j) {
+      if (j) {
+        os << ", ";
+      }
+      os << "T" << j + 1u << "&& p" << j + 1u;
     }
     os << "){";
     for (size_t j = 0u; j < args.size(); ++j) {
       std::ostringstream os;
-      os << 'p' << j + 1u;
-      vars.ImportVar(OPALocalWrapper(args[j]), os.str());
+      std::ostringstream ost;
+      os << "std::forward<T" << j + 1u << ">(p" << j + 1u << ')';
+      ost << 'T' << j + 1u;
+      vars.ImportVar(OPALocalWrapper(args[j]), os.str(), ost.str());
     }
-    os << "value_t retval;";
+    // TODO(dkorolev): `decltype` here too!
+    os << "OPAValue retval;";
     at_end = "return retval;}";
   }
 
   struct ForPlan final {};
   Output(std::ostream& os, ForPlan) : os(os), root(OutputHierarchy::OutputHierarchyBlock(), vars), current(&root) {
-    os << "result_set_t policy(value_t input,value_t data){result_set_t result;";
-    vars.ImportVar(OPALocalWrapper(0), "input");
-    vars.ImportVar(OPALocalWrapper(1), "data");
+    os << "template <typename T_INPUT, typename T_DATA> ";
+    os << "OPAResult policy(T_INPUT&& input,T_DATA&& data){OPAResult result;";
+    vars.ImportVar(OPALocalWrapper(0), "input", "T_INPUT");
+    vars.ImportVar(OPALocalWrapper(1), "data", "T_DATA");
     at_end = "return result;}";
   }
 
   ~Output() {
-    if (!vars.all.empty()) {
-      bool first = true;
-      os << "value_t ";
-      for (auto const& v : vars.all) {
-        if (first) {
-          first = false;
-        } else {
-          os << ',';
-        }
-        os << v;
-      }
-      os << ';';
+    for (OPALocalWrapper i : vars.all_declarations) {
+      os << vars[i].type << ' ' << vars[i].name << ';' << " // Index: " << i.local << '\n';
     }
     root.TopDownPrint(os);
     os << at_end;
   }
 
-  void ResetToUndefined(OPALocalWrapper source) { current->AppendIntroduceOrInitialize(source, "ResetToUndefined()"); }
+  void ResetToUndefined(OPALocalWrapper source) { current->DoAssignVar(source, "Undefined()"); }
 
   void IsDefined(OPALocalWrapper value) {
     std::string const materialized_value = current->Materialize(value);
-    current->AppendStatement() << "if(!" << materialized_value << ".IsUndefined()){" << DeferClosingBrace();
+    current->AppendStatement() << "if(!IsUndefined(" << materialized_value << ")){" << DeferClosingBrace();
   }
 
   void IsUndefined(OPALocalWrapper value) {
     std::string const materialized_value = current->Materialize(value);
-    current->AppendStatement() << "if(" << materialized_value << ".IsUndefined()){" << DeferClosingBrace();
+    current->AppendStatement() << "if(IsUndefined(" << materialized_value << ")){" << DeferClosingBrace();
   }
 
-  void MakeNull(OPALocalWrapper target) { current->AppendIntroduceOrInitialize(target, "MakeNull()"); }
+  void MakeNull(OPALocalWrapper target) { current->DoAssignVar(target, "Null()"); }
 
-  void MakeObject(OPALocalWrapper target) { current->AppendIntroduceOrInitialize(target, "MakeObject()"); }
+  void MakeObject(OPALocalWrapper target) { current->DoAssignVar(target, "Object()"); }
   void MakeNumberRef(OPALocalWrapper target, std::string const& s) {
     std::ostringstream os;
-    os << "SetNumberFromString(\"" << s << "\")";
-    current->AppendIntroduceOrInitialize(target, os.str());
+    os << "NumberFromString(\"" << s << "\")";
+    current->DoAssignVar(target, os.str(), "OPANumber");
   }
 
-  void AssignVar(OPALocalWrapper source, OPALocalWrapper target) { current->AppendAssignOrInitialize(target, source); }
+  void AssignVar(OPALocalWrapper source, OPALocalWrapper target) {
+    std::string const materialized_value = current->Materialize(source);
+    current->DoAssignVar(target, materialized_value, "decltype(" + materialized_value + ')');
+  }
   void AssignVar(char const* s, OPALocalWrapper target) {
     std::ostringstream os;
-    os << "SetString(\"" << s << "\")";
-    current->AppendAssignOrInitialize(target, os.str());
+    os << "OPAString(\"" << s << "\")";
+    current->DoAssignVar(target, os.str(), "OPAString");
   }
   void AssignVar(OPABoolean source, OPALocalWrapper target) {
     std::ostringstream os;
-    os << "SetBoolean(" << std::boolalpha << source.boolean << ')';
-    current->AppendAssignOrInitialize(target, os.str());
+    os << "OPABoolean(" << std::boolalpha << source.boolean << ')';
+    current->DoAssignVar(target, os.str());
   }
 
   void AssignVarOnce(OPALocalWrapper source, OPALocalWrapper target) {
-    current->AppendInitializeIfUndefined(target, source);
+    std::string const materialized_value = current->Materialize(source);
+    current->DoAssignVarOnce(target, materialized_value, "decltype(" + materialized_value + ')');
   }
   void AssignVarOnce(char const* s, OPALocalWrapper target) {
     std::ostringstream os;
-    os << "SetString(\"" << s << "\")";
-    current->AppendInitializeIfUndefined(target, os.str());
+    os << "OPAString(\"" << s << "\")";
+    current->DoAssignVarOnce(target, os.str(), "OPAString");
   }
   void AssignVarOnce(OPABoolean source, OPALocalWrapper target) {
     std::ostringstream os;
-    os << "SetBoolean(" << std::boolalpha << source.boolean << ')';
-    current->AppendInitializeIfUndefined(target, os.str());
+    os << "OPABoolean(" << std::boolalpha << source.boolean << ')';
+    current->DoAssignVarOnce(target, os.str(), "OPABoolean");
   }
 
   void Equal(OPALocalWrapper value, char const* s) {
     std::string const materialized_value = current->Materialize(value);
-    current->AppendStatement() << "if (" << materialized_value << ".IsString(\"" << s << "\")){" << DeferClosingBrace();
+    current->AppendStatement() << "if (IsStringEqualTo(" << materialized_value << ",\"" << s << "\")){"
+                               << DeferClosingBrace();
   }
 
   void Dot(OPALocalWrapper target, OPALocalWrapper source, char const* key) {
     std::ostringstream os;
-    os << current->Materialize(source) << ".GetByKey(\"" << key << "\")";
-    current->AppendAssignOrInitialize(target, os.str());
+    os << "GetValueByKey(" << current->Materialize(source) << ",\"" << key << "\")";
+    current->DoAssignVar(target, os.str(), "decltype(" + os.str() + ')');
   }
 
   void ObjectInsert(char const* key, OPALocalWrapper value, OPALocalWrapper object) {
     std::string const materialized_value = current->Materialize(value);
-    current->AppendStatement() << current->Materialize(object) << ".SetValueForKey(\"" << key << "\", "
+    current->AppendStatement() << "SetValueForKey(" << current->Materialize(object) << ",\"" << key << "\", "
                                << materialized_value << ");";
   }
 
@@ -546,7 +519,16 @@ struct Output final {
       os << materialized_args[i];
     }
     os << ')';
-    current->AppendAssignOrInitialize(target, os.str());
+    std::ostringstream ost;
+    ost << "function_" << f.function << '(';
+    for (size_t i = 0u; i < args.size(); ++i) {
+      if (i) {
+        ost << ',';
+      }
+      ost << "std::declval<" << current->vars[args[i]].type << ">()";
+    }
+    ost << ')';
+    current->DoAssignVar(target, os.str(), "decltype(" + ost.str() + ')');
   }
 
   void Call(OPALocalWrapper target, OPABuiltin f, std::vector<OPALocalWrapper> const& args) {
@@ -563,7 +545,7 @@ struct Output final {
       os << materialized_args[i];
     }
     os << ')';
-    current->AppendAssignOrInitialize(target, os.str());
+    current->DoAssignVar(target, os.str(), "decltype(" + os.str() + ')');
   }
 
   void AddToResultsSet(OPALocalWrapper value) {
