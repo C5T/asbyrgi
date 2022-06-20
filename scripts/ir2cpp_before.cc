@@ -495,7 +495,7 @@ struct Output final {
 
   void Dot(OPALocalWrapper target, OPALocalWrapper source, char const* key) {
     std::ostringstream os;
-    os << "GetValueByKey(" << current->Materialize(source) << ",\"" << key << "\")";
+    os << "rego_string_" << key << "::GetValueByKeyFrom(" << current->Materialize(source) << ')';
     current->DoAssignVar(target, os.str(), "decltype(" + os.str() + ')');
   }
 

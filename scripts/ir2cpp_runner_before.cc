@@ -18,6 +18,7 @@ class OPAValue final {
 
  public:
   OPAValue() : opa_value(JSONNull()) {}
+  OPAValue(std::nullptr_t) : opa_value(JSONNull()) {}
   OPAValue(JSONValue opa_value) : opa_value(std::move(opa_value)) {}
   OPAValue(OPAString const& s) {
     if (Exists(s)) {
@@ -34,6 +35,11 @@ class OPAValue final {
       opa_value = JSONBoolean(Value(b));
     }
   }
+
+  OPAValue(std::string s) : opa_value(JSONString(std::move(s))) {}
+  OPAValue(int i) : opa_value(JSONNumber(i)) {}
+  OPAValue(double d) : opa_value(JSONNumber(d)) {}
+  OPAValue(bool b) : opa_value(JSONBoolean(b)) {}
 
   void DoResetToUndefined() { opa_value = JSONNull(); }
   bool DoIsUndefined() const { return Exists<JSONNull>(opa_value); }
@@ -69,8 +75,8 @@ inline bool IsUndefined(OPAValue const& value) { return value.DoIsUndefined(); }
 inline bool IsUndefined(Optional<std::string> const& value) { return Exists(value); }
 
 inline bool IsStringEqualTo(OPAValue const& value, char const* s) { return value.DoIsStringEqualTo(s); }
-
 inline bool IsStringEqualTo(OPAString const& value, char const* s) { return Exists(value) && Value(value) == s; }
+inline bool IsStringEqualTo(std::string const& value, char const* s) { return value == s; }
 
 // TODO(dkorolev): Should return a custom type that can be assigned to a string "variable" too!
 inline OPAValue Undefined() {
@@ -98,26 +104,26 @@ inline OPANumber NumberFromString(char const* s) { return OPANumber(current::Fro
 
 inline OPAValue opa_plus(OPAValue const& a, OPAValue const& b) {
   if (Exists<JSONNumber>(a.opa_value) && Exists<JSONNumber>(b.opa_value)) {
-    return OPAValue(JSONNumber(Value<JSONNumber>(a.opa_value).number + Value<JSONNumber>(b.opa_value).number));
+    return Value<JSONNumber>(a.opa_value).number + Value<JSONNumber>(b.opa_value).number;
   } else {
-    return OPAValue();
+    return nullptr;
   }
 }
 
 inline OPAValue opa_minus(OPAValue const& a, OPAValue const& b) {
   // TODO(dkorolev): Only work on numbers!
   if (Exists<JSONNumber>(a.opa_value) && Exists<JSONNumber>(b.opa_value)) {
-    return OPAValue(JSONNumber(Value<JSONNumber>(a.opa_value).number - Value<JSONNumber>(b.opa_value).number));
+    return Value<JSONNumber>(a.opa_value).number - Value<JSONNumber>(b.opa_value).number;
   } else {
-    return OPAValue();
+    return nullptr;
   }
 }
 
 inline OPAValue opa_mul(OPAValue const& a, OPAValue const& b) {
   if (Exists<JSONNumber>(a.opa_value) && Exists<JSONNumber>(b.opa_value)) {
-    return OPAValue(JSONNumber(Value<JSONNumber>(a.opa_value).number * Value<JSONNumber>(b.opa_value).number));
+    return Value<JSONNumber>(a.opa_value).number * Value<JSONNumber>(b.opa_value).number;
   } else {
-    return OPAValue();
+    return nullptr;
   }
 }
 
