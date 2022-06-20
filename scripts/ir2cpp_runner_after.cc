@@ -1,3 +1,4 @@
+
 int main() {
   std::string test_input;
   JSONValue test_data_that_is_empty = JSONObject();

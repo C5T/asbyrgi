@@ -430,7 +430,7 @@ struct Output final {
 
   ~Output() {
     for (OPALocalWrapper i : vars.all_declarations) {
-      os << vars[i].type << ' ' << vars[i].name << ';' << " // Index: " << i.local << '\n';
+      os << vars[i].type << ' ' << vars[i].name << ';';
     }
     root.TopDownPrint(os);
     os << at_end;
