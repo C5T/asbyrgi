@@ -1,4 +1,4 @@
-# A simple Alpine container with OPA `v0.41.0` and JSOPA addons.
+# A simple Alpine container with OPA `v0.41.0` and Asbyrgi addons.
 # OPA downloaded from: https://github.com/open-policy-agent/opa/releases
 # To test: `docker run $(docker build -q .) version`.
 

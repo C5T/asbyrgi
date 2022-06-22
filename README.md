@@ -1,8 +1,8 @@
-[![Tests](https://github.com/c5t/jsopa/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/dkorolev/jsopa/actions/workflows/tests.yml)
+[![Tests](https://github.com/c5t/asbyrgi/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/c5t/asbyrgi/actions/workflows/tests.yml)
 
-# `JSOPA`
+# Ásbyrgi
 
-The `jsopa` repository is the OPA IR playground with JavaScript.
+The `Asbyrgi` repository is the OPA IR playground with JavaScript.
 
 ## Vision
 
@@ -52,14 +52,14 @@ Besides, [C5T/Current](https://github.com/c5t/current) is well suited to complem
 
 ### Container
 
-The main way to use this repo is via a Docker container, currently `dimakorolev/jsopa`.
+The main way to use this repo is via a Docker container, currently `dimakorolev/asbyrgi`.
 
 (I plan to move it from DockerHub to GHCR, and push automatically via a GitHub action. — D.K.)
 
 The container itself mimics the `opa` binary. In fact, for most commands, it transparently invokes the very binary:
 
 ```
-docker run dimakorolev/jsopa version
+docker run dimakorolev/asbyrgi version
 Version: 0.41.0
 Build Commit: 0d6a109-dirty
 Build Timestamp: 2022-06-02T17:45:50Z
@@ -69,7 +69,7 @@ Platform: linux/amd64
 WebAssembly: available
 ```
 
-Take the [A+B](https://github.com/c5t/jsopa/blob/main/tests/smoke/sum/policy.rego) policy example from this repo:
+Take the [A+B](https://github.com/c5t/asbyrgi/blob/main/tests/smoke/sum/policy.rego) policy example from this repo:
 
 ```
 package smoke
@@ -81,8 +81,8 @@ The extra commands added to the `opa` binary by this container are: `rego2ir`, `
 Here is how the DSL representation of the above policy looks like:
 
 ```
-curl -s https://raw.githubusercontent.com/c5t/jsopa/main/tests/smoke/sum/policy.rego \
-      | docker run -i dimakorolev/jsopa rego2dsl smoke sum
+curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
+      | docker run -i dimakorolev/asbyrgi rego2dsl smoke sum
 ```
 
 ```
@@ -151,20 +151,20 @@ The JavaScript code, for example, is generated directly from this DSL, in a sing
 The raw IR representation for the above policy is a bit loo long and unreadable to include in the README, but you can find it [here](https://gist.github.com/dkorolev/99808d780b29dcbe398d8841b8f338ce), and the way to generate it is:
 
 ```
-curl -s https://raw.githubusercontent.com/c5t/jsopa/main/tests/smoke/sum/policy.rego \
-      | docker run -i dimakorolev/jsopa rego2ir smoke sum | jq .
+curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
+      | docker run -i dimakorolev/asbyrgi rego2ir smoke sum | jq .
 ```
 
 And here is the [example JavaScript](https://gist.github.com/dkorolev/03cda1b005fda259d227e1388224d4f5) generated for the same Rego policy, same package, same rule; it is output by:
 
 ```
-curl -s https://raw.githubusercontent.com/c5t/jsopa/main/tests/smoke/sum/policy.rego \
-      | docker run -i dimakorolev/jsopa rego2js smoke sum
+curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
+      | docker run -i dimakorolev/asbyrgi rego2js smoke sum
 ```
 
 ### Tests
 
-The [`tests/`](https://github.com/c5t/jsopa/tree/main/tests) directory of this repository contains test policies for JSOPA.
+The [`tests/`](https://github.com/c5t/asbyrgi/tree/main/tests) directory of this repository contains test policies for Asbyrgi.
 
 Each `.rego` file from there would be included in the test suite. In the directory with each `.rego` file there should be a `tests.json` file, which contains one JSON per line: the test inputs.
 
@@ -174,4 +174,4 @@ For the test to work, each `.rego` file should start with a `#!TEST` "shebang" l
 
 I plan to grow this set of tests dramatically, as its scope and coverage will be instrumental in developing a fully compliant high-performance specialized OPA engine moving forward. Would appreciate help here.
 
-All tests are run by a [GitHub action](https://github.com/C5T/jsopa/actions/runs/2492433262).
+All tests are run by a [GitHub action](https://github.com/C5T/Asbyrgi/actions/runs/2492433262).

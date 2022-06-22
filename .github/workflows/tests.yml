@@ -6,33 +6,33 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - name: 'Check out JSOPA'
+      - name: 'Check out Asbyrgi'
         uses: actions/checkout@v3
         with:
-          path: jsopa
+          path: asbyrgi
           ref: ${{ github.ref }}
       - name: 'Use `node.js`'
         uses: actions/setup-node@v3
       - name: 'Run `npm i`'
         run: |
-          (cd jsopa; npm i)
-      - name: 'Build the JSOPA container'
-        id: jsopa_container
+          (cd asbyrgi; npm i)
+      - name: 'Build the Asbyrgi container'
+        id: asbyrgi_container
         run: |
-          (cd jsopa; docker build .)
-          echo ::set-output name=JSOPA_CONTAINER_ID::$(cd jsopa; docker build -q .)
+          (cd asbyrgi; docker build .)
+          echo ::set-output name=ASBYRGI_CONTAINER_ID::$(cd asbyrgi; docker build -q .)
       - name: 'Generate all `golden`-s'
         run: |
-          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./scripts/gen_all_goldens.sh)
+          export ASBYRGI_CONTAINER_ID=${{ steps.asbyrgi_container.outputs.ASBYRGI_CONTAINER_ID }}
+          (cd asbyrgi; ./scripts/gen_all_goldens.sh)
       - name: 'Generate all JavaScript policies'
         run: |
-          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./scripts/gen_all_js.sh)
+          export ASBYRGI_CONTAINER_ID=${{ steps.asbyrgi_container.outputs.ASBYRGI_CONTAINER_ID }}
+          (cd asbyrgi; ./scripts/gen_all_js.sh)
       - name: '[Re-]Generate all the tests (TODO(dkorolev): Fixme.)'
         run: |
-          export JSOPA_CONTAINER_ID=${{ steps.jsopa_container.outputs.JSOPA_CONTAINER_ID }}
-          (cd jsopa; ./scripts/gen_all_js_tests.sh)
+          export ASBYRGI_CONTAINER_ID=${{ steps.asbyrgi_container.outputs.ASBYRGI_CONTAINER_ID }}
+          (cd asbyrgi; ./scripts/gen_all_js_tests.sh)
       - name: 'RUN ALL JS TESTS'
         run: |
-          (cd jsopa; ./node_modules/mocha/bin/mocha.js tests/all_tests.js)
+          (cd asbyrgi; ./node_modules/mocha/bin/mocha.js tests/all_tests.js)

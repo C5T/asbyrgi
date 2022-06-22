@@ -16,4 +16,4 @@ The text of this license is available under the [Creative Commons Attribution-Sh
 
 --
 
-Please refer to the [README](https://github.com/c5t/jsopa/blob/main/contributors/README.md) for the instructions on how to sign the CLA.
+Please refer to the [README](https://github.com/c5t/asbyrgi/blob/main/contributors/README.md) for the instructions on how to sign the CLA.

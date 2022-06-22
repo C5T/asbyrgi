@@ -1,6 +1,6 @@
 #!/bin/bash
 
-JSOPA_CONTAINER_ID=$1
+ASBYRGI_CONTAINER_ID=$1
 REGO="$2"
 
 HEADER=$(head -n 1 "$REGO")
@@ -13,7 +13,7 @@ if [[ "$HEADER" =~ \#!TEST ]] ; then
   DIR=$(dirname "$REGO")
 
   echo -n "Creating '$REGO.stage1.cpp' ..."
-  if (cd "$DIR"; cat "$NAME" | docker run -i $JSOPA_CONTAINER_ID rego2cpp $PACKAGE $RULE | clang-format-10 - | grep -v '^$' >"$NAME.stage1.cpp") ; then
+  if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2cpp $PACKAGE $RULE | clang-format-10 - | grep -v '^$' >"$NAME.stage1.cpp") ; then
     echo -e "\b\b\b\b: Done."
     echo -n "Creating '$REGO.stage2.cpp'"
     (cat "$SCRIPT_DIR/ir2cpp_before.cc" "$DIR/$NAME.stage1.cpp" "$SCRIPT_DIR/ir2cpp_after.cc" >"$DIR/$NAME.stage2.cpp")
