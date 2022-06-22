@@ -1,27 +1,25 @@
+
 int main() {
   Policy policy;
   PopulatePolicy(policy);
   policy_singleton = &policy;
 
-  for (size_t i = 0; i < policy.function_bodies.size(); ++i) {
-    std::cout << "value_t function_" << i << "(";
-    for (size_t j = 0u; j < policy.functions[i].size(); ++j) {
-      if (j) {
-        std::cout << ", ";
-      }
-      std::cout << "value_t p" << j + 1u;
-    }
-    std::cout << ") { locals_t locals; ";
-    for (size_t j = 0u; j < policy.functions[i].size(); ++j) {
-      std::cout << "locals[" << policy.functions[i][j] << "] = p" << j + 1u << ";\n";
-    }
-    std::cout << "value_t retval; \n";
-    policy.function_bodies[i](policy)([]() {});
-    std::cout << "return retval; }\n";
+  // TODO(dkorolev): This would only work for strings that are valid C++ identifiers, of course.
+  for (std::string const& s : policy.strings) {
+    std::cout << "struct rego_string_" << s << " final{constexpr static char const* s = \"" << s
+              << "\"; template <class T> static decltype(std::declval<T>()." << s
+              << ") GetValueByKeyFrom(T&& x) { return std::forward<T>(x)." << s
+              << "; } static OPAValue GetValueByKeyFrom(OPAValue const& object) { return object.DoGetValueByKey(\"" << s
+              << "\");}};";
   }
 
-  std::cout << "result_set_t policy(value_t input, value_t data) {\n";
-  std::cout << "locals_t locals; locals[0] = input; locals[1] = data; result_set_t result;\n";
-  policy.plans["main"](policy)([]() {});
-  std::cout << "return result; }\n";
+  for (size_t i = 0; i < policy.function_bodies.size(); ++i) {
+    Output output(std::cout, Output::ForFunction(), i, policy.functions[i]);
+    policy.function_bodies[i](policy).output(output);
+  }
+
+  {
+    Output output(std::cout, Output::ForPlan());
+    policy.plans["main"](policy).output(output);
+  }
 }
