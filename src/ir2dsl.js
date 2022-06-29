@@ -108,7 +108,15 @@ const statement_processors = {
   // TODO(dkorolev): `WithStmt`.
 
   // TODO(dkorolev): This is a hack for v0.41.
-  MakeNumberRefStmt: e => emit(`MakeNumberRefStmt(StringConstantIndex(${e.stmt.Index}), ${wrap(e.stmt.target)})`),
+  MakeNumberRefStmt: e => {
+    let rc = '';
+    if (e.stmt.row && e.stmt.col) {
+      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+    } else {
+      rc = 'RowColNotProvided()';
+    }
+	  emit(`MakeNumberRefStmt(StringConstantIndex(${e.stmt.Index}), ${wrap(e.stmt.target)}, ${rc})`);
+  },
 
   BlockStmt: e => {
     emit('BeginBlockStmt()');
@@ -139,6 +147,8 @@ processStatements = statements => {
         p.forEach(k => args.push(wrap(e.stmt[k])));
         if (e.stmt && e.stmt.row && e.stmt.col) {
           args.push(`RowCol(${e.stmt.row}, ${e.stmt.col})`);
+        } else {
+          args.push('RowColNotProvided()');
         }
         emit(`${e.type}(${args.join(', ')})`);
       } else {
