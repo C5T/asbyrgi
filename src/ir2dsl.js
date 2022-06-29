@@ -122,7 +122,7 @@ const statement_processors = {
   CallStmt: e => {
     let indexes = [`Local(${e.stmt.result})`];
     e.stmt.args.forEach(arg => indexes.push(wrap(arg)));
-    emit(`CallStmtBegin(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}))`);
+    emit(`CallStmtBegin(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}), RowCol(${e.stmt.row}, ${e.stmt.col}))`);
     e.stmt.args.forEach((arg, arg_index) => {
       emit(`  CallStmtPassArg(${arg_index}, ${wrap(arg)})`);
     });
@@ -137,6 +137,9 @@ processStatements = statements => {
       if (typeof p === 'object') {
         let args = [];
         p.forEach(k => args.push(wrap(e.stmt[k])));
+        if (e.stmt && e.stmt.row && e.stmt.col) {
+          args.push(`RowCol(${e.stmt.row}, ${e.stmt.col})`);
+        }
         emit(`${e.type}(${args.join(', ')})`);
       } else {
         statement_processors[e.type](e);

@@ -19,6 +19,12 @@ struct OPAUserDefinedFunction final {
   explicit OPAUserDefinedFunction(size_t function) : function(function) {}
 };
 
+struct OPARowCol final {
+  size_t const row;
+  size_t const col;
+  OPARowCol(size_t row = 0u, size_t col = 0u) : row(row), col(col) {}
+};
+
 struct OPABuiltin final {
   char const* builtin_name;
   size_t const args_count;
@@ -590,12 +596,12 @@ struct Policy final {
 
 inline static Policy* policy_singleton;
 
-IRStatement stmtAssignVarOnce(OPALocalWrapper source, OPALocalWrapper target) {
+IRStatement stmtAssignVarOnce(OPALocalWrapper source, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].Assign(locals[source], next); },
                      [=](Output& output) { output.AssignVarOnce(source, target); });
 }
 
-IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target) {
+IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) {
         if (locals[target].CouldBeUndefined()) {
@@ -608,7 +614,7 @@ IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target) {
       [=](Output& output) { output.AssignVarOnce(source, target); });
 }
 
-IRStatement stmtAssignVarOnce(OPABoolean source, OPALocalWrapper target) {
+IRStatement stmtAssignVarOnce(OPABoolean source, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) {
         if (locals[target].CouldBeUndefined()) {
@@ -620,18 +626,18 @@ IRStatement stmtAssignVarOnce(OPABoolean source, OPALocalWrapper target) {
       [=](Output& output) { output.AssignVarOnce(source, target); });
 }
 
-IRStatement stmtAssignVar(OPALocalWrapper source, OPALocalWrapper target) {
+IRStatement stmtAssignVar(OPALocalWrapper source, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].Assign(locals[source], next); },
                      [=](Output& output) { output.AssignVar(source, target); });
 }
 
-IRStatement stmtDot(OPALocalWrapper source, char const* key, OPALocalWrapper target) {
+IRStatement stmtDot(OPALocalWrapper source, char const* key, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) { locals[target].Assign(locals[source].GetByKey(key), next); },
       [=](Output& output) { output.Dot(target, source, key); });
 }
 
-IRStatement stmtEqual(OPALocalWrapper a, const char* b) {
+IRStatement stmtEqual(OPALocalWrapper a, const char* b, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t done) {
         done();
@@ -643,7 +649,7 @@ IRStatement stmtEqual(OPALocalWrapper a, const char* b) {
       [=](Output& output) { output.Equal(a, b); });
 }
 
-IRStatement stmtIsDefined(OPALocalWrapper source) {
+IRStatement stmtIsDefined(OPALocalWrapper source, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t done) {
         if (locals[source].CouldBeDefined()) {
@@ -655,7 +661,7 @@ IRStatement stmtIsDefined(OPALocalWrapper source) {
       [=](Output& output) { output.IsDefined(source); });
 }
 
-IRStatement stmtIsUndefined(OPALocalWrapper source) {
+IRStatement stmtIsUndefined(OPALocalWrapper source, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t done) {
         if (locals[source].CouldBeUndefined()) {
@@ -667,12 +673,12 @@ IRStatement stmtIsUndefined(OPALocalWrapper source) {
       [=](Output& output) { output.IsUndefined(source); });
 }
 
-IRStatement stmtMakeNull(OPALocalWrapper target) {
+IRStatement stmtMakeNull(OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].MakeNull(next); },
                      [=](Output& output) { output.MakeNull(target); });
 }
 
-IRStatement stmtMakeNumberRef(OPAStringConstant value, OPALocalWrapper target) {
+IRStatement stmtMakeNumberRef(OPAStringConstant value, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].SetNumber(next); },
                      [=](Output& output) {
                        Policy const& policy = *policy_singleton;
@@ -680,13 +686,13 @@ IRStatement stmtMakeNumberRef(OPAStringConstant value, OPALocalWrapper target) {
                      });
 }
 
-IRStatement stmtMakeObject(OPALocalWrapper target) {
+IRStatement stmtMakeObject(OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].MakeObject(next); },
                      [=](Output& output) { output.MakeObject(target); });
 }
 
 // NOTE(dkorolev): This is a static, `constexpr`, "compile-time" check. It should not generate any output code.
-IRStatement stmtNotEqual(OPABoolean a, OPABoolean b) {
+IRStatement stmtNotEqual(OPABoolean a, OPABoolean b, OPARowCol rowcol = OPARowCol()) {
   if (a.boolean != b.boolean) {
     return IRStatement([=](Locals&, callback_t next, callback_t) { next(); },
                        [=](Output&) {});  // NOTE(dkorolev: A no-op.
@@ -695,18 +701,21 @@ IRStatement stmtNotEqual(OPABoolean a, OPABoolean b) {
   }
 }
 
-IRStatement stmtObjectInsert(char const* key, OPALocalWrapper value, OPALocalWrapper object) {
+IRStatement stmtObjectInsert(char const* key,
+                             OPALocalWrapper value,
+                             OPALocalWrapper object,
+                             OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) { locals[object].SetValueForKey(key, locals[value], next); },
       [=](Output& output) { output.ObjectInsert(key, value, object); });
 }
 
-IRStatement stmtResetLocal(OPALocalWrapper target) {
+IRStatement stmtResetLocal(OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
   return IRStatement([=](Locals& locals, callback_t next, callback_t) { locals[target].ResetToUndefined(next); },
                      [=](Output& output) { output.ResetToUndefined(target); });
 }
 
-IRStatement stmtResultSetAdd(OPALocalWrapper value) {
+IRStatement stmtResultSetAdd(OPALocalWrapper value, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) {
         locals.AddToResultsSet(locals[value]);
@@ -716,7 +725,7 @@ IRStatement stmtResultSetAdd(OPALocalWrapper value) {
 }
 
 // TODO(dkorolev): Think deeper about "recursion" / `walk` in this aspect.
-IRStatement stmtReturnLocalStmt(OPALocalWrapper source) {
+IRStatement stmtReturnLocalStmt(OPALocalWrapper source, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) {
         // TODO(dkorolev): Ask the OPA folks whether this should "return" or just save the return value. And is there
@@ -730,7 +739,10 @@ IRStatement stmtReturnLocalStmt(OPALocalWrapper source) {
       });
 }
 
-IRStatement stmtCall(OPAUserDefinedFunction f, std::vector<OPALocalWrapper> const& args, OPALocalWrapper target) {
+IRStatement stmtCall(OPAUserDefinedFunction f,
+                     OPARowCol rowcol,
+                     std::vector<OPALocalWrapper> const& args,
+                     OPALocalWrapper target) {
   Policy const& policy = *policy_singleton;
   if (args.size() != policy.functions[f.function].size()) {
     throw std::logic_error("Internal invariant failed.");
@@ -744,7 +756,7 @@ IRStatement stmtCall(OPAUserDefinedFunction f, std::vector<OPALocalWrapper> cons
       [=](Output& output) { output.Call(target, f, args); });
 }
 
-IRStatement stmtCall(OPABuiltin f, std::vector<OPALocalWrapper> const& args, OPALocalWrapper target) {
+IRStatement stmtCall(OPABuiltin f, OPARowCol rowcol, std::vector<OPALocalWrapper> const& args, OPALocalWrapper target) {
   if (args.size() != f.args_count) {
     throw std::logic_error("Internal invariant failed.");
   }
@@ -758,7 +770,7 @@ IRStatement stmtCall(OPABuiltin f, std::vector<OPALocalWrapper> const& args, OPA
       [=](Output& output) { output.Call(target, f, args); });
 }
 
-IRStatement stmtBlock(std::vector<IRStatement> const& code) {
+IRStatement stmtBlock(std::vector<IRStatement> const& code, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t unused_done) {
         if (!code.empty()) {
