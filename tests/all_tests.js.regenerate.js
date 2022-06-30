@@ -33,7 +33,7 @@ rego.forEach(fn => {
     try {
       return fs.readFileSync(goldens_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(JSON.parse);
     } catch(e) {
-      console.error(`Error reading '${goldens_path}', did you run './gen_all_goldens.sh'?`);
+      console.error(`Error reading '${goldens_path}', did you run './scripts/gen_all_goldens.sh'?`);
       process.exit(1);
     }
   })();
@@ -52,7 +52,7 @@ Object.keys(cases).sort().forEach(fn => {
   console.log(`    try {`);
   console.log(`      return require('./${fn}.js').main;`);
   console.log(`    } catch(e) {`);
-  console.log(`      console.error("Error loading './${fn}.js', did you run './gen_all_js.sh'?");`);
+  console.log(`      console.error("Error loading './${fn}.js', did you run './scripts/gen_all_js.sh'?");`);
   console.log(`      process.exit(1);`);
   console.log(`    }`);
   console.log(`  })();`);

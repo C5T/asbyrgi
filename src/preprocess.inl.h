@@ -34,35 +34,35 @@
 #define BeginBlock() stmtBlock({
 #define EndBlock() }),
 
-#define CallStmtBegin(func, target) stmtCall(func, {
+#define CallStmtBegin(func, target, rowcol) stmtCall(func, rowcol, {
 #define CallStmtPassArg(arg_index, arg_value) arg_value,
 #define CallStmtEnd(func, target) }, target),
 
-#define ArrayAppendStmt(array, value) stmtArrayAppend(array, value),
-#define AssignIntStmt(value, target) stmtAssignInt(value, target),
-#define AssignVarOnceStmt(source, target) stmtAssignVarOnce(source, target),
-#define AssignVarStmt(source, target) stmtAssignVar(source, target),
-#define DotStmt(source, key, target) stmtDot(source, key, target),
-#define EqualStmt(a, b) stmtEqual(a, b),
-#define IsArrayStmt(array) stmtIsArray(array),
-#define IsDefinedStmt(source) stmtIsDefined(source),
-#define IsObjectStmt(source) stmtIsObject(source),
-#define IsUndefinedStmt(source) stmtIsUndefined(source),
-#define LenStmt(source, target) stmtLen(source, target),
-#define MakeArrayStmt(capacity, target) stmtMakeArray(capacity, target),
-#define MakeNullStmt(target) stmtMakeNull(target),
-#define MakeNumberIntStmt(value, target) stmtMakeNumberInt(value, target),
-#define MakeNumberRefStmt(index, target) stmtMakeNumberRef(index, target),
-#define MakeObjectStmt(target) stmtMakeObject(target),
-#define MakeSetStmt(target) stmtMakeSet(target),
-#define NotEqualStmt(a, b) stmtNotEqual(a, b),
-#define ObjectInsertOnceStmt(key, value, object) stmtObjectInsertOnce(key, value, object),
-#define ObjectInsertStmt(key, value, object) stmtObjectInsert(key, value, object),
-#define ObjectMergeStmt(a, b, target) stmtObjectMerge(a, b, target),
-#define ResetLocalStmt(target) stmtResetLocal(target),
-#define ResultSetAddStmt(value) stmtResultSetAdd(value),
-#define ReturnLocalStmt(source) stmtReturnLocalStmt(source),
-#define SetAddStmt(value, set) stmtSetAdd(value, set),
+#define ArrayAppendStmt(...) stmtArrayAppend(__VA_ARGS__),
+#define AssignIntStmt(...) stmtAssignInt(__VA_ARGS__),
+#define AssignVarOnceStmt(...) stmtAssignVarOnce(__VA_ARGS__),
+#define AssignVarStmt(...) stmtAssignVar(__VA_ARGS__),
+#define DotStmt(...) stmtDot(__VA_ARGS__),
+#define EqualStmt(...) stmtEqual(__VA_ARGS__),
+#define IsArrayStmt(...) stmtIsArray(__VA_ARGS__),
+#define IsDefinedStmt(...) stmtIsDefined(__VA_ARGS__),
+#define IsObjectStmt(...) stmtIsObject(__VA_ARGS__),
+#define IsUndefinedStmt(...) stmtIsUndefined(__VA_ARGS__),
+#define LenStmt(...) stmtLen(__VA_ARGS__),
+#define MakeArrayStmt(...) stmtMakeArray(__VA_ARGS__),
+#define MakeNullStmt(...) stmtMakeNull(__VA_ARGS__),
+#define MakeNumberIntStmt(...) stmtMakeNumberInt(__VA_ARGS__),
+#define MakeNumberRefStmt(...) stmtMakeNumberRef(__VA_ARGS__),
+#define MakeObjectStmt(...) stmtMakeObject(__VA_ARGS__),
+#define MakeSetStmt(...) stmtMakeSet(__VA_ARGS__),
+#define NotEqualStmt(...) stmtNotEqual(__VA_ARGS__),
+#define ObjectInsertOnceStmt(...) stmtObjectInsertOnce(__VA_ARGS__),
+#define ObjectInsertStmt(...) stmtObjectInsert(__VA_ARGS__),
+#define ObjectMergeStmt(...) stmtObjectMerge(__VA_ARGS__),
+#define ResetLocalStmt(...) stmtResetLocal(__VA_ARGS__),
+#define ResultSetAddStmt(...) stmtResultSetAdd(__VA_ARGS__),
+#define ReturnLocalStmt(...) stmtReturnLocalStmt(__VA_ARGS__),
+#define SetAddStmt(...) stmtSetAdd(__VA_ARGS__),
 
 #define Local(a) OPALocalWrapper(a)
 
@@ -71,6 +71,8 @@
 #define OperandStringIndex(a, string) string  // TODO: Compile-time strings for strong typing.
 
 #define StringConstantIndex(a) OPAStringConstant(a)
+
+#define RowCol(row,col) OPARowCol(row, col)
 
 #define Func(x) OPAFunctionWrapper(x)
 #define BuiltinFunc(x) opa_builtin.x

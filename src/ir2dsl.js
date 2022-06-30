@@ -108,7 +108,15 @@ const statement_processors = {
   // TODO(dkorolev): `WithStmt`.
 
   // TODO(dkorolev): This is a hack for v0.41.
-  MakeNumberRefStmt: e => emit(`MakeNumberRefStmt(StringConstantIndex(${e.stmt.Index}), ${wrap(e.stmt.target)})`),
+  MakeNumberRefStmt: e => {
+    let rc = '';
+    if (e.stmt.row && e.stmt.col) {
+      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+    } else {
+      rc = 'RowColNotProvided()';
+    }
+	  emit(`MakeNumberRefStmt(StringConstantIndex(${e.stmt.Index}), ${wrap(e.stmt.target)}, ${rc})`);
+  },
 
   BlockStmt: e => {
     emit('BeginBlockStmt()');
@@ -122,7 +130,7 @@ const statement_processors = {
   CallStmt: e => {
     let indexes = [`Local(${e.stmt.result})`];
     e.stmt.args.forEach(arg => indexes.push(wrap(arg)));
-    emit(`CallStmtBegin(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}))`);
+    emit(`CallStmtBegin(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}), RowCol(${e.stmt.row}, ${e.stmt.col}))`);
     e.stmt.args.forEach((arg, arg_index) => {
       emit(`  CallStmtPassArg(${arg_index}, ${wrap(arg)})`);
     });
@@ -137,6 +145,11 @@ processStatements = statements => {
       if (typeof p === 'object') {
         let args = [];
         p.forEach(k => args.push(wrap(e.stmt[k])));
+        if (e.stmt && e.stmt.row && e.stmt.col) {
+          args.push(`RowCol(${e.stmt.row}, ${e.stmt.col})`);
+        } else {
+          args.push('RowColNotProvided()');
+        }
         emit(`${e.type}(${args.join(', ')})`);
       } else {
         statement_processors[e.type](e);

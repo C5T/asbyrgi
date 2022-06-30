@@ -116,40 +116,40 @@ const wrap_for_assignment = (x) => {
 
 // TODO(dkorolev): Checks and early returns everywhere.
 
-#define ArrayAppendStmt(array, value) if (array === undefined || array.t !== 'arrat') return; array.push(value);
-#define AssignIntStmt(value, target) target = value;  // TODO(dkorolev): Check the type, fail if wrong, I assume?
-#define AssignVarOnceStmt(source, target) if (target !== undefined) return; target = wrap_for_assignment(source);
-#define AssignVarStmt(source, target) target = wrap_for_assignment(source);
+#define ArrayAppendStmt(array, value, rowcol) if (array === undefined || array.t !== 'arrat') return; array.push(value);
+#define AssignIntStmt(value, target, rowcol) target = value;  // TODO(dkorolev): Check the type, fail if wrong, I assume?
+#define AssignVarOnceStmt(source, target, rowcol) if (target !== undefined) return; target = wrap_for_assignment(source);
+#define AssignVarStmt(source, target, rowcol) target = wrap_for_assignment(source);
 // TODO(dkorolev): `BreakStmt`.
 // TODO(dkorolev): `CallDynamicStmt`.
 // TODO(dkorolev): `CallStmt`.
-#define CallStmtBegin(func, target) target = (() => { let args = [];
+#define CallStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
-#define DotStmt(source, key, target) target = source.v[key];
-#define EqualStmt(a, b) if (JSON.stringify(a) !== JSON.stringify(wrap_for_assignment(b))) return;
-#define IsArrayStmt(array) if (array === undefined || array.t !== 'array') return;
-#define IsDefinedStmt(source) if (source === undefined) return;
-#define IsObjectStmt(source) if (source === undefined || source.t !== 'object') return;
-#define IsUndefinedStmt(source) if (source !== undefined) return;
-#define LenStmt(source, target) target = source.v.length;  // TODO(dkorolev): Type checks!
-#define MakeArrayStmt(capacity, target) target = Array(capacity);  // TODO(dkorolev): Ensure this matches OPA's arrays.
-#define MakeNullStmt(target) target = { t: 'null', v: null };
-#define MakeNumberIntStmt(value, target) target = { t: 'number', v: Number(value.v) };
-#define MakeNumberRefStmt(index, target) target = { t: 'number', v: Number(static_strings[index]) };  // TODO(dkorolev): This is `Ref`!
-#define MakeObjectStmt(target) target = { t: 'object', v: {} };
-#define MakeSetStmt(target) target = { t: 'set', v: {} };
+#define DotStmt(source, key, target, rowcol) target = source.v[key];
+#define EqualStmt(a, b, rowcol) if (JSON.stringify(a) !== JSON.stringify(wrap_for_assignment(b))) return;
+#define IsArrayStmt(array, rowcol) if (array === undefined || array.t !== 'array') return;
+#define IsDefinedStmt(source, rowcol) if (source === undefined) return;
+#define IsObjectStmt(source, rowcol) if (source === undefined || source.t !== 'object') return;
+#define IsUndefinedStmt(source, rowcol) if (source !== undefined) return;
+#define LenStmt(source, target, rowcol) target = source.v.length;  // TODO(dkorolev): Type checks!
+#define MakeArrayStmt(capacity, target, rowcol) target = Array(capacity);  // TODO(dkorolev): Ensure this matches OPA's arrays.
+#define MakeNullStmt(target, rowcol) target = { t: 'null', v: null };
+#define MakeNumberIntStmt(value, target, rowcol) target = { t: 'number', v: Number(value.v) };
+#define MakeNumberRefStmt(index, target, rowcol) target = { t: 'number', v: Number(static_strings[index]) };  // TODO(dkorolev): This is `Ref`!
+#define MakeObjectStmt(target, rowcol) target = { t: 'object', v: {} };
+#define MakeSetStmt(target, rowcol) target = { t: 'set', v: {} };
 // NOTE(dkorolev): Skipping `NopStmt`.
-#define NotEqualStmt(a, b) if (JSON.stringify(a) === JSON.stringify(b)) return;
+#define NotEqualStmt(a, b, rowcol) if (JSON.stringify(a) === JSON.stringify(b)) return;
 // TODO(dkorolev): `NotStmt`.
-#define ObjectInsertOnceStmt(key, value, object) object.v[key] = value;  // TODO(dkorolev): Checks!
-#define ObjectInsertStmt(key, value, object) object.v[key] = value;  // TODO(dkorolev): Checks!
-#define ObjectMergeStmt(a, b, target) target = { FIXME_MERGED: [a, b] };  // TODO(dkorolev): Implement this.
-#define ResetLocalStmt(target) target = undefined;
-#define ResultSetAddStmt(value) result.push(value);  // TODO(dkorolev): Checks?
-#define ReturnLocalStmt(source) retval = source; // TODO(dkorolev): Is this even important given we know the return "local" index?
+#define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = value;  // TODO(dkorolev): Checks!
+#define ObjectInsertStmt(key, value, object, rowcol) object.v[key] = value;  // TODO(dkorolev): Checks!
+#define ObjectMergeStmt(a, b, target, rowcol) target = { FIXME_MERGED: [a, b] };  // TODO(dkorolev): Implement this.
+#define ResetLocalStmt(target, rowcol) target = undefined;
+#define ResultSetAddStmt(value, rowcol) result.push(value);  // TODO(dkorolev): Checks?
+#define ReturnLocalStmt(source, rowcol) retval = source; // TODO(dkorolev): Is this even important given we know the return "local" index?
 // TODO(dkorolev): `ScanStmt`.
-#define SetAddStmt(value, set) set.v[value] = true;
+#define SetAddStmt(value, set, rowcol) set.v[value] = true;
 // TODO(dkorolev): `WithStmt`.
 
 #define Local(a) locals[a]
