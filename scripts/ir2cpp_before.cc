@@ -50,6 +50,13 @@ struct OPAStringConstant final {
   explicit OPAStringConstant(size_t string_index) : string_index(string_index) {}
 };
 
+struct OPAStringConstantWithValue final {
+  size_t const string_index;
+  char const* string;
+  explicit OPAStringConstantWithValue(size_t string_index, char const* string)
+      : string_index(string_index), string(string) {}
+};
+
 struct OPABoolean final {
   bool const boolean;
   OPABoolean() = delete;
@@ -135,7 +142,7 @@ struct LocalValue final {
     object_keys = save_keys;
   }
 
-  void Assign(char const*, callback_t next) {
+  void Assign(OPAStringConstantWithValue, callback_t next) {
     LocalType const save_type = type;
     type = LocalType::String;
     next();
@@ -149,7 +156,7 @@ struct LocalValue final {
     type = save_type;
   }
 
-  LocalValue const& GetByKey(char const* key) {
+  LocalValue const& GetByKey(OPAStringConstantWithValue key) {
     if (type == LocalType::FunctionArgument) {
       return StaticFunctionArgument();
     }
@@ -157,7 +164,7 @@ struct LocalValue final {
       // TODO(dkorolev): Message type, `file:row:col`.
       return StaticUndefined();
     }
-    auto const cit = object_keys.find(key);
+    auto const cit = object_keys.find(key.string);
     if (cit == object_keys.end()) {
       // TODO(dkorolev): Message type, `file:row:col`.
       return StaticUndefined();
@@ -165,23 +172,23 @@ struct LocalValue final {
     return cit->second;
   }
 
-  void SetValueForKey(char const* key, LocalValue const& value, callback_t next) {
+  void SetValueForKey(OPAStringConstantWithValue key, LocalValue const& value, callback_t next) {
     if (type != LocalType::Object && type != LocalType::FunctionArgument) {
       // TODO(dkorolev): Message type, `file:row:col`.
       throw std::logic_error("Internal invariant failed.");
     }
     auto const save_type = type;
     type = LocalType::Object;
-    if (object_keys.count(key)) {
-      auto& placeholder = object_keys[key];
+    if (object_keys.count(key.string)) {
+      auto& placeholder = object_keys[key.string];
       auto const save = placeholder;
       placeholder = value;
       next();
       placeholder = save;
     } else {
-      object_keys[key] = value;
+      object_keys[key.string] = value;
       next();
-      object_keys.erase(key);
+      object_keys.erase(key.string);
     }
     type = save_type;
   }
@@ -468,9 +475,9 @@ struct Output final {
     std::string const materialized_value = current->Materialize(source);
     current->DoAssignVar(target, materialized_value, "decltype(" + materialized_value + ')');
   }
-  void AssignVar(char const* s, OPALocalWrapper target) {
+  void AssignVar(OPAStringConstantWithValue s, OPALocalWrapper target) {
     std::ostringstream os;
-    os << "OPAString(\"" << s << "\")";
+    os << "OPAString(\"" << s.string << "\")";
     current->DoAssignVar(target, os.str(), "OPAString");
   }
   void AssignVar(OPABoolean source, OPALocalWrapper target) {
@@ -483,9 +490,9 @@ struct Output final {
     std::string const materialized_value = current->Materialize(source);
     current->DoAssignVarOnce(target, materialized_value, "decltype(" + materialized_value + ')');
   }
-  void AssignVarOnce(char const* s, OPALocalWrapper target) {
+  void AssignVarOnce(OPAStringConstantWithValue s, OPALocalWrapper target) {
     std::ostringstream os;
-    os << "OPAString(\"" << s << "\")";
+    os << "OPAString(\"" << s.string << "\")";
     current->DoAssignVarOnce(target, os.str(), "OPAString");
   }
   void AssignVarOnce(OPABoolean source, OPALocalWrapper target) {
@@ -494,21 +501,21 @@ struct Output final {
     current->DoAssignVarOnce(target, os.str(), "OPABoolean");
   }
 
-  void Equal(OPALocalWrapper value, char const* s) {
+  void Equal(OPALocalWrapper value, OPAStringConstantWithValue s) {
     std::string const materialized_value = current->Materialize(value);
-    current->AppendStatement() << "if (IsStringEqualTo(" << materialized_value << ",\"" << s << "\")){"
+    current->AppendStatement() << "if (IsStringEqualTo(" << materialized_value << ",\"" << s.string << "\")){"
                                << DeferClosingBrace();
   }
 
-  void Dot(OPALocalWrapper target, OPALocalWrapper source, char const* key) {
+  void Dot(OPALocalWrapper target, OPALocalWrapper source, OPAStringConstantWithValue key) {
     std::ostringstream os;
-    os << "rego_string_" << key << "::GetValueByKeyFrom(" << current->Materialize(source) << ')';
+    os << "s" << key.string_index << "::GetValueByKeyFrom(" << current->Materialize(source) << ')';
     current->DoAssignVar(target, os.str(), "decltype(" + os.str() + ')');
   }
 
-  void ObjectInsert(char const* key, OPALocalWrapper value, OPALocalWrapper object) {
+  void ObjectInsert(OPAStringConstantWithValue key, OPALocalWrapper value, OPALocalWrapper object) {
     std::string const materialized_value = current->Materialize(value);
-    current->AppendStatement() << "SetValueForKey(" << current->Materialize(object) << ",\"" << key << "\", "
+    current->AppendStatement() << "SetValueForKey(" << current->Materialize(object) << ",\"" << key.string << "\", "
                                << materialized_value << ");";
   }
 
@@ -602,7 +609,9 @@ IRStatement stmtAssignVarOnce(OPALocalWrapper source, OPALocalWrapper target, OP
                      [=](Output& output) { output.AssignVarOnce(source, target); });
 }
 
-IRStatement stmtAssignVarOnce(const char* source, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
+IRStatement stmtAssignVarOnce(OPAStringConstantWithValue source,
+                              OPALocalWrapper target,
+                              OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) {
         if (locals[target].CouldBeUndefined()) {
@@ -632,13 +641,16 @@ IRStatement stmtAssignVar(OPALocalWrapper source, OPALocalWrapper target, OPARow
                      [=](Output& output) { output.AssignVar(source, target); });
 }
 
-IRStatement stmtDot(OPALocalWrapper source, char const* key, OPALocalWrapper target, OPARowCol rowcol = OPARowCol()) {
+IRStatement stmtDot(OPALocalWrapper source,
+                    OPAStringConstantWithValue key,
+                    OPALocalWrapper target,
+                    OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t) { locals[target].Assign(locals[source].GetByKey(key), next); },
       [=](Output& output) { output.Dot(target, source, key); });
 }
 
-IRStatement stmtEqual(OPALocalWrapper a, const char* b, OPARowCol rowcol = OPARowCol()) {
+IRStatement stmtEqual(OPALocalWrapper a, OPAStringConstantWithValue b, OPARowCol rowcol = OPARowCol()) {
   return IRStatement(
       [=](Locals& locals, callback_t next, callback_t done) {
         done();
@@ -702,7 +714,7 @@ IRStatement stmtNotEqual(OPABoolean a, OPABoolean b, OPARowCol rowcol = OPARowCo
   }
 }
 
-IRStatement stmtObjectInsert(char const* key,
+IRStatement stmtObjectInsert(OPAStringConstantWithValue key,
                              OPALocalWrapper value,
                              OPALocalWrapper object,
                              OPARowCol rowcol = OPARowCol()) {
