@@ -1,16 +1,35 @@
 
+inline bool IsValidIdentifier(std::string const& s) {
+  if (s.empty()) {
+    return false;
+  }
+  if (!(s[0] == '_' || std::isalpha(s[0]))) {
+    return false;
+  }
+  for (char c : s) {
+    if (!(c == '_' || std::isalnum(c))) {
+      return false;
+    }
+  }
+  return true;
+}
+
 int main() {
   Policy policy;
   PopulatePolicy(policy);
   policy_singleton = &policy;
 
-  // TODO(dkorolev): This would only work for strings that are valid C++ identifiers, of course.
-  for (std::string const& s : policy.strings) {
-    std::cout << "struct rego_string_" << s << " final{constexpr static char const* s = \"" << s
-              << "\"; template <class T> static decltype(std::declval<T>()." << s
-              << ") GetValueByKeyFrom(T&& x) { return std::forward<T>(x)." << s
-              << "; } static OPAValue GetValueByKeyFrom(OPAValue const& object) { return object.DoGetValueByKey(\"" << s
-              << "\");}};";
+  // TODO(dkorolev): Escape the string once `current` is in the picture.
+  for (size_t i = 0u; i < policy.strings.size(); ++i) {
+    std::string const& s = policy.strings[i];
+    std::cout << "struct s" << i << " final{constexpr static char const* s = \"" << s << "\";";
+    if (IsValidIdentifier(s)) {
+      std::cout << "template <class T> static decltype(std::declval<T>()." << s << ") GetValueByKeyFrom(T&& x)"
+                << "{ return std::forward<T>(x)." << s << "; }";
+    }
+    std::cout << "static OPAValue GetValueByKeyFrom(OPAValue const& object)"
+              << "{ return object.DoGetValueByKey(\"" << s << "\");}";
+    std::cout << "};";
   }
 
   for (size_t i = 0; i < policy.function_bodies.size(); ++i) {

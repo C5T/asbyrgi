@@ -68,7 +68,7 @@
 
 #define OperandLocal(a) OPALocalWrapper(a)
 #define OperandBool(a) OPABoolean(a)
-#define OperandStringIndex(a, string) string  // TODO: Compile-time strings for strong typing.
+#define OperandStringIndex(a, string) OPAStringConstantWithValue(a, string)
 
 #define StringConstantIndex(a) OPAStringConstant(a)
 
