@@ -24,6 +24,7 @@ struct OPARowCol final {
   size_t const col;
   OPARowCol(size_t row = 0u, size_t col = 0u) : row(row), col(col) {}
 };
+inline OPARowCol RowColNotProvided() { return OPARowCol(); }
 
 struct OPABuiltin final {
   char const* builtin_name;
