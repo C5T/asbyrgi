@@ -1,5 +1,7 @@
 // This "C" preprocessor file contains the definitions that convert the DSL of an OPA IR policy into valid JavaScript code.
 
+(() => {
+
 let function_bodies = {};
 let plans = {};
 
@@ -67,9 +69,15 @@ const external_to_internal = (v) => {
   }
 };
 
-module.exports.main = (input, data) => {
+const main = (input, data) => {
   return internal_to_external(plans.main(external_to_internal(input), external_to_internal(data)));
 };
+
+if (typeof window === 'undefined') {
+  module.exports.main = main;
+} else {
+  export_main(main);
+}
 
 const opa_get_function_impl = (f) => {
   if (typeof f === 'number') {
@@ -92,7 +100,7 @@ const wrap_for_assignment = (x) => {
 
 // TODO(dkorolev): Expose the number of functions to this macro?
 #define BeginOPADSL()
-#define EndOPADSL() module.exports.plans = plans;
+#define EndOPADSL() if (typeof window === 'undefined') { module.exports.plans = plans; } })();
 
 #define BeginStaticStrings() const static_strings = [
 #define EndStaticStrings() ];
