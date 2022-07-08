@@ -6,5 +6,8 @@
 node_modules
 package-lock.json
 
+tests/all_tests.js
+tests/mocha.html
+
 a.out
 core
