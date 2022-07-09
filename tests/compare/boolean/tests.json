@@ -1,0 +1,8 @@
+{"x":false}
+{"x":true}
+{"x":42}
+{"x":"42"}
+{"x":[false]}
+{"x":[true]}
+{}
+{"not_x":true}

@@ -14,10 +14,33 @@ const opa_builtins = {
       let v = [];
       // TODO(dkorolev): This is a dirty hack, of course, fix it.
       for (let i = args[0].v; i <= args[1].v; ++i) {
-        v.push(i);
+        v.push({ t: 'number', v: i });
       }
       return { t: 'array', v };
     }
+  }
+};
+
+const opa_object_get_by_key = (x, key) => {
+  if (x === undefined || !('t' in x) || x.t === undefined) {
+    return undefined
+  }
+  const k = (() => {
+    if (typeof key === 'object') {
+      if ('t' in key) {
+        return key.v;
+      } else {
+        return undefined;
+      }
+    } else {
+      return key;
+    }
+  })();
+  if (k === undefined) {
+    return undefined;
+  } else {
+    // NOTE(dkorolev): Access string characters by index?
+    return x.v[k];
   }
 };
 
@@ -25,7 +48,11 @@ const internal_to_external_impl = {
   number: (x) => { return x; },
   string: (x) => { return x; },
   boolean: (x) => { return x; },
-  array: (x) => { return x; },
+  array: (x) => {
+    let result = [];
+    x.forEach(e => result.push(internal_to_external(e)));
+    return result;
+  },
   object: (x) => {
     let result = {};
     for (let k in x) {
@@ -54,6 +81,11 @@ const internal_to_external = (x) => {
 
 // TODO(dkorolev): Write this.
 const external_to_internal = (v) => {
+  if (Array.isArray(v)) {
+    let result = [];
+    v.forEach(e => result.push(external_to_internal(e)));
+    return { t: 'array', v: result };
+  }
   const t = typeof v;
   if (t === 'string' || t === 'number' || t === 'boolean') {
     return { t, v };
@@ -124,8 +156,8 @@ const wrap_for_assignment = (x) => {
 
 // TODO(dkorolev): Checks and early returns everywhere.
 
-#define ArrayAppendStmt(array, value, rowcol) if (array === undefined || array.t !== 'arrat') return; array.push(value);
-#define AssignIntStmt(value, target, rowcol) target = value;  // TODO(dkorolev): Check the type, fail if wrong, I assume?
+#define ArrayAppendStmt(array, value, rowcol) if (array === undefined || array.t !== 'array') return; array.v.push(wrap_for_assignment(value));
+#define AssignIntStmt(value, target, rowcol) target = { t: 'number', v: value };  // TODO(dkorolev): Check the type, fail if wrong, I assume?
 #define AssignVarOnceStmt(source, target, rowcol) if (target !== undefined) return; target = wrap_for_assignment(source);
 #define AssignVarStmt(source, target, rowcol) target = wrap_for_assignment(source);
 // TODO(dkorolev): `BreakStmt`.
@@ -134,24 +166,24 @@ const wrap_for_assignment = (x) => {
 #define CallStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
-#define DotStmt(source, key, target, rowcol) target = source.v[key];
+#define DotStmt(source, key, target, rowcol) target = opa_object_get_by_key(source, key);
 #define EqualStmt(a, b, rowcol) if (JSON.stringify(a) !== JSON.stringify(wrap_for_assignment(b))) return;
 #define IsArrayStmt(array, rowcol) if (array === undefined || array.t !== 'array') return;
 #define IsDefinedStmt(source, rowcol) if (source === undefined) return;
 #define IsObjectStmt(source, rowcol) if (source === undefined || source.t !== 'object') return;
 #define IsUndefinedStmt(source, rowcol) if (source !== undefined) return;
-#define LenStmt(source, target, rowcol) target = source.v.length;  // TODO(dkorolev): Type checks!
-#define MakeArrayStmt(capacity, target, rowcol) target = Array(capacity);  // TODO(dkorolev): Ensure this matches OPA's arrays.
+#define LenStmt(source, target, rowcol) target = {t: 'number', v: Object.keys(source.v).length};  // TODO(dkorolev): Type checks!
+#define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: Array(internal_to_external(capacity) || 0)};  // TODO(dkorolev): Ensure this matches OPA's arrays.
 #define MakeNullStmt(target, rowcol) target = { t: 'null', v: null };
-#define MakeNumberIntStmt(value, target, rowcol) target = { t: 'number', v: Number(value.v) };
+#define MakeNumberIntStmt(number_value, target, rowcol) target = { t: 'number', v: number_value };
 #define MakeNumberRefStmt(index, target, rowcol) target = { t: 'number', v: Number(static_strings[index]) };  // TODO(dkorolev): This is `Ref`!
 #define MakeObjectStmt(target, rowcol) target = { t: 'object', v: {} };
 #define MakeSetStmt(target, rowcol) target = { t: 'set', v: {} };
 // NOTE(dkorolev): Skipping `NopStmt`.
 #define NotEqualStmt(a, b, rowcol) if (JSON.stringify(a) === JSON.stringify(b)) return;
 // TODO(dkorolev): `NotStmt`.
-#define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = value;  // TODO(dkorolev): Checks!
-#define ObjectInsertStmt(key, value, object, rowcol) object.v[key] = value;  // TODO(dkorolev): Checks!
+#define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
+#define ObjectInsertStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
 #define ObjectMergeStmt(a, b, target, rowcol) target = { FIXME_MERGED: [a, b] };  // TODO(dkorolev): Implement this.
 #define ResetLocalStmt(target, rowcol) target = undefined;
 #define ResultSetAddStmt(value, rowcol) result.push(value);  // TODO(dkorolev): Checks?
@@ -167,6 +199,7 @@ const wrap_for_assignment = (x) => {
 #define OperandStringIndex(a, string) string
 
 #define StringConstantIndex(a) a
+#define NumberInitializer(a) a
 
 #define Func(x) x
 #define BuiltinFunc(x) {builtin_func: opa_builtins.x}

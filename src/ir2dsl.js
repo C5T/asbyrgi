@@ -77,7 +77,6 @@ const emit = (s) => console.log(global_indent + s);
 
 const statement_processors = {
   ArrayAppendStmt: ['array', 'value'],
-  AssignIntStmt: ['value', 'target'],
   AssignVarOnceStmt: ['source', 'target'],
   AssignVarStmt: ['source', 'target'],
   // TODO(dkorolev): `BreakStmt`.
@@ -91,7 +90,6 @@ const statement_processors = {
   LenStmt: ['source', 'target'],
   MakeArrayStmt: ['capacity', 'target'],
   MakeNullStmt: ['target'],
-  MakeNumberIntStmt: ['value', 'target'],
   MakeObjectStmt: ['target'],
   MakeSetStmt: ['target'],
   // NOTE(dkorolev): Skipping `NopStmt`.
@@ -116,6 +114,25 @@ const statement_processors = {
       rc = 'RowColNotProvided()';
     }
 	  emit(`MakeNumberRefStmt(StringConstantIndex(${e.stmt.Index}), ${wrap(e.stmt.target)}, ${rc})`);
+  },
+
+  AssignIntStmt: e => {
+    let rc = '';
+    if (e.stmt.row && e.stmt.col) {
+      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+    } else {
+      rc = 'RowColNotProvided()';
+    }
+    emit(`AssignIntStmt(NumberInitializer(${e.stmt.value}), ${wrap(e.stmt.target)}, ${rc})`);
+  },
+  MakeNumberIntStmt: e => {
+    let rc = '';
+    if (e.stmt.row && e.stmt.col) {
+      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+    } else {
+      rc = 'RowColNotProvided()';
+    }
+    emit(`MakeNumberIntStmt(NumberInitializer(${e.stmt.value}), ${wrap(e.stmt.target)}, ${rc})`);
   },
 
   BlockStmt: e => {
