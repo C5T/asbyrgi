@@ -9,5 +9,6 @@ package-lock.json
 tests/all_tests.js
 tests/mocha.html
 
+*.swp
 a.out
 core
