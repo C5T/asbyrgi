@@ -1,0 +1,8 @@
+{"user":"alice","action":"read","object":"server123"}
+{"user":"alice","action":"read","object":"database456"}
+{"user":"alice","action":"write","object":"server123"}
+{"user":"alice","action":"write","object":"database456"}
+{"user":"bob","action":"read","object":"server123"}
+{"user":"bob","action":"read","object":"database456"}
+{"user":"bob","action":"write","object":"server123"}
+{"user":"bob","action":"write","object":"database456"}

@@ -44,6 +44,22 @@ const opa_object_get_by_key = (x, key) => {
   }
 };
 
+const opa_scan = (source, locals, key_index, value_index, block) => {
+  if (source.t === 'array') {
+    source.v.forEach((e, i) => {
+      locals[key_index] = {t:'number', v:i};
+      locals[value_index] = JSON.parse(JSON.stringify(e));
+      block();
+    });
+  } else if (source.t === 'object') {
+    for (let k in source.v) {
+      locals[key_index] = {t:'string', v:k};
+      locals[value_index] = JSON.parse(JSON.stringify(source.v[k]));
+      block();
+    }
+  }
+};
+
 const internal_to_external_impl = {
   number: (x) => { return x; },
   string: (x) => { return x; },
@@ -162,7 +178,6 @@ const wrap_for_assignment = (x) => {
 #define AssignVarStmt(source, target, rowcol) target = wrap_for_assignment(source);
 // TODO(dkorolev): `BreakStmt`.
 // TODO(dkorolev): `CallDynamicStmt`.
-// TODO(dkorolev): `CallStmt`.
 #define CallStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
@@ -188,7 +203,8 @@ const wrap_for_assignment = (x) => {
 #define ResetLocalStmt(target, rowcol) target = undefined;
 #define ResultSetAddStmt(value, rowcol) result.push(value);  // TODO(dkorolev): Checks?
 #define ReturnLocalStmt(source, rowcol) retval = source; // TODO(dkorolev): Is this even important given we know the return "local" index?
-// TODO(dkorolev): `ScanStmt`.
+#define ScanStmtBegin(source, key, value, rowcol) opa_scan(source, locals, key, value, () => {
+#define ScanStmtEnd() });
 #define SetAddStmt(value, set, rowcol) set.v[value] = true;
 // TODO(dkorolev): `WithStmt`.
 

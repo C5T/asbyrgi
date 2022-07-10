@@ -101,7 +101,6 @@ const statement_processors = {
   ResetLocalStmt: ['target'],
   ResultSetAddStmt: ['value'],
   ReturnLocalStmt: ['source'],
-  // TODO(dkorolev): `ScanStmt`.
   SetAddStmt: ['value', 'set'],
   // TODO(dkorolev): `WithStmt`.
 
@@ -152,6 +151,15 @@ const statement_processors = {
       emit(`  CallStmtPassArg(${arg_index}, ${wrap(arg)})`);
     });
     emit(`CallStmtEnd(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}))`);
+  },
+
+  ScanStmt: e => {
+    emit(`ScanStmtBegin(Local(${e.stmt.source}), ${e.stmt.key}, ${e.stmt.value}, RowCol(${e.stmt.row}, ${e.stmt.col}))`);
+    const save_indent = global_indent;
+    global_indent = global_indent + '  ';
+    processStatements(e.stmt.block.stmts);
+    global_indent = save_indent;
+    emit('ScanStmtEnd()');
   },
 };
 
