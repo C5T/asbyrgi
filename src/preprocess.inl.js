@@ -45,7 +45,6 @@ const opa_object_get_by_key = (x, key) => {
 };
 
 const opa_scan = (source, locals, key_index, value_index, block) => {
-  console.log(JSON.stringify(source));
   if (source.t === 'array') {
     source.v.forEach((e, i) => {
       locals[key_index] = {t:'number', v:i};
