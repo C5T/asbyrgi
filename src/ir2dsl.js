@@ -88,7 +88,6 @@ const statement_processors = {
   IsObjectStmt: ['source'],
   IsUndefinedStmt: ['source'],
   LenStmt: ['source', 'target'],
-  MakeArrayStmt: ['capacity', 'target'],
   MakeNullStmt: ['target'],
   MakeObjectStmt: ['target'],
   MakeSetStmt: ['target'],
@@ -103,6 +102,15 @@ const statement_processors = {
   ReturnLocalStmt: ['source'],
   SetAddStmt: ['value', 'set'],
   // TODO(dkorolev): `WithStmt`.
+
+  MakeArrayStmt: e => {
+    if (e.stmt.row && e.stmt.col) {
+      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+    } else {
+      rc = 'RowColNotProvided()';
+    }
+    emit(`MakeArrayStmt(BareNumber(${e.stmt.capacity}), ${wrap(e.stmt.target)}, ${rc})`);
+  },
 
   // TODO(dkorolev): This is a hack for v0.41.
   MakeNumberRefStmt: e => {
@@ -122,7 +130,7 @@ const statement_processors = {
     } else {
       rc = 'RowColNotProvided()';
     }
-    emit(`AssignIntStmt(NumberInitializer(${e.stmt.value}), ${wrap(e.stmt.target)}, ${rc})`);
+    emit(`AssignIntStmt(BareNumber(${e.stmt.value}), ${wrap(e.stmt.target)}, ${rc})`);
   },
   MakeNumberIntStmt: e => {
     let rc = '';
@@ -131,7 +139,7 @@ const statement_processors = {
     } else {
       rc = 'RowColNotProvided()';
     }
-    emit(`MakeNumberIntStmt(NumberInitializer(${e.stmt.value}), ${wrap(e.stmt.target)}, ${rc})`);
+    emit(`MakeNumberIntStmt(BareNumber(${e.stmt.value}), ${wrap(e.stmt.target)}, ${rc})`);
   },
 
   BlockStmt: e => {

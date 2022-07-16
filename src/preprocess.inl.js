@@ -148,7 +148,18 @@ const wrap_for_assignment = (x) => {
 
 // TODO(dkorolev): Expose the number of functions to this macro?
 #define BeginOPADSL()
-#define EndOPADSL() if (typeof window === 'undefined') { module.exports.plans = plans; } })();
+#define EndOPADSL() \
+  if (typeof window === 'undefined') { module.exports.plans = plans; } \
+  if (process.argv.length >= 2 && process.argv[process.argv.length - 2] === '-p') { \
+    const express = require('express'); \
+    const app = express(); \
+    app.use(express.json()); \
+    app.post('*', function(req, res) { \
+      res.send({result: main(req.body.input, {})}); \
+    }); \
+    app.listen(Number(process.argv[process.argv.length - 1])); \
+  } \
+  })();
 
 #define BeginStaticStrings() const static_strings = [
 #define EndStaticStrings() ];
@@ -188,7 +199,7 @@ const wrap_for_assignment = (x) => {
 #define IsObjectStmt(source, rowcol) if (source === undefined || source.t !== 'object') return;
 #define IsUndefinedStmt(source, rowcol) if (source !== undefined) return;
 #define LenStmt(source, target, rowcol) target = {t: 'number', v: Object.keys(source.v).length};  // TODO(dkorolev): Type checks!
-#define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: Array(internal_to_external(capacity) || 0)};  // TODO(dkorolev): Ensure this matches OPA's arrays.
+#define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: []};
 #define MakeNullStmt(target, rowcol) target = { t: 'null', v: null };
 #define MakeNumberIntStmt(number_value, target, rowcol) target = { t: 'number', v: number_value };
 #define MakeNumberRefStmt(index, target, rowcol) target = { t: 'number', v: Number(static_strings[index]) };  // TODO(dkorolev): This is `Ref`!
@@ -214,8 +225,8 @@ const wrap_for_assignment = (x) => {
 #define OperandBool(a) Boolean(a)
 #define OperandStringIndex(a, string) string
 
+#define BareNumber(a) a
 #define StringConstantIndex(a) a
-#define NumberInitializer(a) a
 
 #define Func(x) x
 #define BuiltinFunc(x) {builtin_func: opa_builtins.x}
