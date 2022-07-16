@@ -188,7 +188,7 @@ const wrap_for_assignment = (x) => {
 #define IsObjectStmt(source, rowcol) if (source === undefined || source.t !== 'object') return;
 #define IsUndefinedStmt(source, rowcol) if (source !== undefined) return;
 #define LenStmt(source, target, rowcol) target = {t: 'number', v: Object.keys(source.v).length};  // TODO(dkorolev): Type checks!
-#define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: Array(internal_to_external(capacity) || 0)};  // TODO(dkorolev): Ensure this matches OPA's arrays.
+#define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: []};
 #define MakeNullStmt(target, rowcol) target = { t: 'null', v: null };
 #define MakeNumberIntStmt(number_value, target, rowcol) target = { t: 'number', v: number_value };
 #define MakeNumberRefStmt(index, target, rowcol) target = { t: 'number', v: Number(static_strings[index]) };  // TODO(dkorolev): This is `Ref`!
@@ -214,8 +214,8 @@ const wrap_for_assignment = (x) => {
 #define OperandBool(a) Boolean(a)
 #define OperandStringIndex(a, string) string
 
+#define BareNumber(a) a
 #define StringConstantIndex(a) a
-#define NumberInitializer(a) a
 
 #define Func(x) x
 #define BuiltinFunc(x) {builtin_func: opa_builtins.x}
