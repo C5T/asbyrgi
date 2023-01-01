@@ -13,13 +13,13 @@ if [[ "$HEADER" =~ \#!TEST ]] ; then
   DIR=$(dirname "$REGO")
 
   echo -n "Creating '$REGO.stage1.cpp' ..."
-  if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2cpp $PACKAGE $RULE | clang-format-10 - | grep -v '^$' >"$NAME.stage1.cpp") ; then
+  if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2cpp $PACKAGE $RULE | clang-format - | grep -v '^$' >"$NAME.stage1.cpp") ; then
     echo -e "\b\b\b\b: Done."
     echo -n "Creating '$REGO.stage2.cpp'"
     (cat "$SCRIPT_DIR/ir2cpp_before.cc" "$DIR/$NAME.stage1.cpp" "$SCRIPT_DIR/ir2cpp_after.cc" >"$DIR/$NAME.stage2.cpp")
     echo -e ": Done."
     echo -n "Creating '$REGO.stage3.cpp' ..."
-    if g++ -std=c++17 "$DIR/$NAME.stage2.cpp" && ./a.out | clang-format-10 - >"$DIR/$NAME.stage3.cpp" ; then
+    if g++ -std=c++17 "$DIR/$NAME.stage2.cpp" && ./a.out | clang-format - >"$DIR/$NAME.stage3.cpp" ; then
       echo -e "\b\b\b\b: Done."
     else
       echo 'Failed.'
