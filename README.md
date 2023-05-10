@@ -52,14 +52,14 @@ Besides, [C5T/Current](https://github.com/c5t/current) is well suited to complem
 
 ### Container
 
-The main way to use this repo is via a Docker container, currently `dimakorolev/asbyrgi`.
+The main way to use this repo is via a Docker container, currently `crnt/sleipnir`.
 
 (I plan to move it from DockerHub to GHCR, and push automatically via a GitHub action. — D.K.)
 
 The container itself mimics the `opa` binary. In fact, for most commands, it transparently invokes the very binary:
 
 ```
-docker run dimakorolev/asbyrgi version
+docker run crnt/sleipnir version
 Version: 0.41.0
 Build Commit: 0d6a109-dirty
 Build Timestamp: 2022-06-02T17:45:50Z
@@ -82,7 +82,7 @@ Here is how the DSL representation of the above policy looks like:
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i dimakorolev/asbyrgi rego2dsl smoke sum
+      | docker run -i crnt/sleipnir rego2dsl smoke sum
 ```
 
 ```
@@ -152,14 +152,14 @@ The raw IR representation for the above policy is a bit loo long and unreadable 
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i dimakorolev/asbyrgi rego2ir smoke sum | jq .
+      | docker run -i crnt/sleipnir rego2ir smoke sum | jq .
 ```
 
 And here is the [example JavaScript](https://gist.github.com/dkorolev/03cda1b005fda259d227e1388224d4f5) generated for the same Rego policy, same package, same rule; it is output by:
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i dimakorolev/asbyrgi rego2js smoke sum
+      | docker run -i crnt/sleipnir rego2js smoke sum
 ```
 
 ### Tests
