@@ -304,7 +304,7 @@ const wrap_for_assignment = (x) => {
 #define CallStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
-#define NotStmtBegin(rolcol) if ((() => {
+#define NotStmtBegin(rowcol) if ((() => {
 #define NotStmtEnd() ; return true; })() === true) return;
 #define DotStmt(source, key, target, rowcol) target = opa_object_get_by_key(source, key);
 #define EqualStmt(a, b, rowcol) if (JSON.stringify(a) !== JSON.stringify(wrap_for_assignment(b))) return;
