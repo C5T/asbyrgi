@@ -11,6 +11,8 @@ const fs = require('fs');
 
 const ir = JSON.parse(fs.readFileSync(process.argv[2] || 'example_policy.ir.json'));
 
+const fileName = (i) => { return JSON.stringify(ir.static.files[i].value); };
+
 console.log('BeginOPADSL()');
 console.log('');
 
@@ -79,7 +81,7 @@ const statement_processors = {
   ArrayAppendStmt: ['array', 'value'],
   AssignVarOnceStmt: ['source', 'target'],
   AssignVarStmt: ['source', 'target'],
-  // TODO(dkorolev): `BreakStmt`.
+  BreakStmt: [],
   // TODO(dkorolev): `CallDynamicStmt`.
   DotStmt: ['source', 'key', 'target'],
   EqualStmt: ['a', 'b'],
@@ -93,7 +95,6 @@ const statement_processors = {
   MakeSetStmt: ['target'],
   // NOTE(dkorolev): Skipping `NopStmt`.
   NotEqualStmt: ['a', 'b'],
-  // TODO(dkorolev): `NotStmt`.
   ObjectInsertOnceStmt: ['key', 'value', 'object'],
   ObjectInsertStmt: ['key', 'value', 'object'],
   ObjectMergeStmt: ['a', 'b', 'target'],
@@ -101,11 +102,11 @@ const statement_processors = {
   ResultSetAddStmt: ['value'],
   ReturnLocalStmt: ['source'],
   SetAddStmt: ['value', 'set'],
-  // TODO(dkorolev): `WithStmt`.
 
+  // `MakeArrayStmt` is a special case, as its first argument, `capacity`, is a `BareNumber`, not a `local` to `wrap`.
   MakeArrayStmt: e => {
     if (e.stmt.row && e.stmt.col) {
-      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+      rc = `RowCol(${fileName(e.stmt.file)},${e.stmt.row}, ${e.stmt.col})`;
     } else {
       rc = 'RowColNotProvided()';
     }
@@ -116,7 +117,7 @@ const statement_processors = {
   MakeNumberRefStmt: e => {
     let rc = '';
     if (e.stmt.row && e.stmt.col) {
-      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+      rc = `RowCol(${fileName(e.stmt.file)},${e.stmt.row}, ${e.stmt.col})`;
     } else {
       rc = 'RowColNotProvided()';
     }
@@ -126,7 +127,7 @@ const statement_processors = {
   AssignIntStmt: e => {
     let rc = '';
     if (e.stmt.row && e.stmt.col) {
-      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+      rc = `RowCol(${fileName(e.stmt.file)},${e.stmt.row}, ${e.stmt.col})`;
     } else {
       rc = 'RowColNotProvided()';
     }
@@ -135,7 +136,7 @@ const statement_processors = {
   MakeNumberIntStmt: e => {
     let rc = '';
     if (e.stmt.row && e.stmt.col) {
-      rc = `RowCol(${e.stmt.row}, ${e.stmt.col})`;
+      rc = `RowCol(${fileName(e.stmt.file)},${e.stmt.row}, ${e.stmt.col})`;
     } else {
       rc = 'RowColNotProvided()';
     }
@@ -143,7 +144,7 @@ const statement_processors = {
   },
 
   BlockStmt: e => {
-    emit('BeginBlockStmt()');
+    emit(`BeginBlockStmt(RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
     const save_indent = global_indent;
     global_indent = global_indent + '  ';
     processBlocks(e.stmt.blocks);
@@ -151,18 +152,42 @@ const statement_processors = {
     emit('EndBlockStmt()');
   },
 
+  NotStmt: e => {
+    emit(`NotStmtBegin(RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
+    const save_indent = global_indent;
+    global_indent = global_indent + '  ';
+    processStatements(e.stmt.block.stmts);
+    global_indent = save_indent;
+    emit('NotStmtEnd()');
+  },
+
   CallStmt: e => {
     let indexes = [`Local(${e.stmt.result})`];
     e.stmt.args.forEach(arg => indexes.push(wrap(arg)));
-    emit(`CallStmtBegin(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}), RowCol(${e.stmt.row}, ${e.stmt.col}))`);
+    emit(`CallStmtBegin(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}), RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
     e.stmt.args.forEach((arg, arg_index) => {
       emit(`  CallStmtPassArg(${arg_index}, ${wrap(arg)})`);
     });
     emit(`CallStmtEnd(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}))`);
   },
 
+  WithStmt: e => {
+    let wrappedPath;
+    if (e.stmt.path) {
+      wrappedPath = `WrappedPath((${e.stmt.path.join(', ')}))`;
+    } else {
+      wrappedPath = 'WrappedPathEmpty()';
+    }
+    emit(`WithStmtBegin(Local(${e.stmt.local}), ${wrap(e.stmt.value)}, ${wrappedPath}, RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
+    const save_indent = global_indent;
+    global_indent = global_indent + '  ';
+    processStatements(e.stmt.block.stmts);
+    global_indent = save_indent;
+    emit('WithStmtEnd()');
+  },
+
   ScanStmt: e => {
-    emit(`ScanStmtBegin(Local(${e.stmt.source}), ${e.stmt.key}, ${e.stmt.value}, RowCol(${e.stmt.row}, ${e.stmt.col}))`);
+    emit(`ScanStmtBegin(Local(${e.stmt.source}), ${e.stmt.key}, ${e.stmt.value}, RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
     const save_indent = global_indent;
     global_indent = global_indent + '  ';
     processStatements(e.stmt.block.stmts);
@@ -179,7 +204,7 @@ processStatements = statements => {
         let args = [];
         p.forEach(k => args.push(wrap(e.stmt[k])));
         if (e.stmt && e.stmt.row && e.stmt.col) {
-          args.push(`RowCol(${e.stmt.row}, ${e.stmt.col})`);
+          args.push(`RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col})`);
         } else {
           args.push('RowColNotProvided()');
         }

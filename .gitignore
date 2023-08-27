@@ -1,5 +1,6 @@
 *.goldens.json
 *.rego.dsl
+*.rego.ir
 *.rego.js
 *.rego.*.cpp
 

@@ -5,10 +5,119 @@
 let function_bodies = {};
 let plans = {};
 
+const printErrorNotImplemented = () => {
+  console.error(`Not implemented in ${(new Error()).stack.split('\n')[2]}`);
+};
+
+const opa_eq = (args) => {
+  if (args[0].t === 'number' && args[1].t === 'number') {
+    return { t: 'boolean', v: args[0].v === args[1].v };
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+};
+
+const opa_neq = (args) => {
+  if (args[0].t === 'number' && args[1].t === 'number') {
+    return { t: 'boolean', v: args[0].v !== args[1].v };
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+};
+
+const opa_lt = (args) => {
+  if (args[0].t === 'number' && args[1].t === 'number') {
+    return { t: 'boolean', v: args[0].v < args[1].v };
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+};
+
+const opa_gt = (args) => {
+  if (args[0].t === 'number' && args[1].t === 'number') {
+    return { t: 'boolean', v: args[0].v > args[1].v };
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+};
+
+const opa_lte = (args) => {
+  if (args[0].t === 'number' && args[1].t === 'number') {
+    return { t: 'boolean', v: args[0].v <= args[1].v };
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+};
+
+const opa_gte = (args) => {
+  if (args[0].t === 'number' && args[1].t === 'number') {
+    return { t: 'boolean', v: args[0].v >= args[1].v };
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+};
+
+const opa_rem = (args) => {
+  if (args[0].t === 'number' && args[1].t === 'number') {
+    const a = Math.floor(args[0].v);
+    const b = Math.floor(args[1].v);
+    if (a === args[0].v && b === args[1].v) {
+      if (b !== 0) {
+        return { t: 'number', v: args[0].v % args[1].v };
+      } else {
+        printErrorNotImplemented();
+        return undefined;
+      }
+    } else {
+      printErrorNotImplemented();
+      return undefined;
+    }
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+  return undefined;
+};
+
+const opa_split = (args) => {
+  if (args[0].t === 'string') {
+    if (typeof args[1] === 'string') {
+      return {t: 'string', v: args[0].v.split(args[1])};
+    } else if (args[1].t === 'string') {
+      return {t: 'string', v: args[0].v.split(args[1].v)};
+    }
+  }
+  printErrorNotImplemented();
+  return undefined;
+};
+
+const opa_is_value_in_set = (args) => {
+  if (args[1].t === 'set' && args[0].t in args[1].v) {
+    return { t: 'boolean', v: args[1].v[args[0].t].has(args[0].v) };
+  } else {
+    printErrorNotImplemented();
+    return undefined;
+  }
+};
+
 const opa_builtins = {
   plus: (args) => { return { t: 'number', v: args[0].v + args[1].v }; },
   minus: (args) => { return { t: 'number', v: args[0].v - args[1].v }; },
   mul: (args) => { return { t: 'number', v: args[0].v * args[1].v }; },
+  equal: opa_eq,
+  neq: opa_neq,
+  lt: opa_lt,
+  gt: opa_gt,
+  lte: opa_lte,
+  gte: opa_gte,
+  rem: opa_rem,
+  split: opa_split,
   numbers: {
     range: (args) => {
       let v = [];
@@ -18,7 +127,10 @@ const opa_builtins = {
       }
       return { t: 'array', v };
     }
-  }
+  },
+  internal: {
+    member_2: opa_is_value_in_set,  // NOTE(dkorolev): Inferred from OPA's source code.
+  },
 };
 
 const opa_object_get_by_key = (x, key) => {
@@ -192,6 +304,8 @@ const wrap_for_assignment = (x) => {
 #define CallStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
+#define NotStmtBegin(rolcol) if ((() => {
+#define NotStmtEnd() ; return true; })() === true) return;
 #define DotStmt(source, key, target, rowcol) target = opa_object_get_by_key(source, key);
 #define EqualStmt(a, b, rowcol) if (JSON.stringify(a) !== JSON.stringify(wrap_for_assignment(b))) return;
 #define IsArrayStmt(array, rowcol) if (array === undefined || array.t !== 'array') return;
@@ -207,7 +321,6 @@ const wrap_for_assignment = (x) => {
 #define MakeSetStmt(target, rowcol) target = { t: 'set', v: {} };
 // NOTE(dkorolev): Skipping `NopStmt`.
 #define NotEqualStmt(a, b, rowcol) if (JSON.stringify(a) === JSON.stringify(b)) return;
-// TODO(dkorolev): `NotStmt`.
 #define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
 #define ObjectInsertStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
 #define ObjectMergeStmt(a, b, target, rowcol) target = { FIXME_MERGED: [a, b] };  // TODO(dkorolev): Implement this.
@@ -216,13 +329,13 @@ const wrap_for_assignment = (x) => {
 #define ReturnLocalStmt(source, rowcol) retval = source; // TODO(dkorolev): Is this even important given we know the return "local" index?
 #define ScanStmtBegin(source, key, value, rowcol) opa_scan(source, locals, key, value, () => {
 #define ScanStmtEnd() });
-#define SetAddStmt(value, set, rowcol) set.v[value] = true;
+#define SetAddStmt(value, set, rowcol) if (!(value.t in set.v)) { set.v[value.t] = new Set(); } set.v[value.t].add(value.v);
 // TODO(dkorolev): `WithStmt`.
 
 #define Local(a) locals[a]
 
 #define OperandLocal(a) locals[a]
-#define OperandBool(a) Boolean(a)
+#define OperandBool(a) {t: 'boolean', v: a}
 #define OperandStringIndex(a, string) string
 
 #define BareNumber(a) a
