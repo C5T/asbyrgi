@@ -10,6 +10,24 @@ if [[ "$HEADER" =~ \#!TEST ]] ; then
   NAME=$(basename "$REGO")
   DIR=$(dirname "$REGO")
 
+  if [[ "$EXPORT_IR" != "" ]] ; then
+    echo -n "Creating '$REGO.ir' ..."
+    if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2ir $PACKAGE $RULE | jq . >"$NAME.ir") ; then
+      echo -e "\b\b\b\b: Done."
+    else
+      echo 'Failed.'
+    fi
+  fi
+
+  if [[ "$EXPORT_DSL" != "" ]] ; then
+    echo -n "Creating '$REGO.dsl' ..."
+    if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2dsl $PACKAGE $RULE >"$NAME.dsl") ; then
+      echo -e "\b\b\b\b: Done."
+    else
+      echo 'Failed.'
+    fi
+  fi
+
   echo -n "Creating '$REGO.js' ..."
   if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2js $PACKAGE $RULE >"$NAME.js") ; then
     echo -e "\b\b\b\b: Done."
