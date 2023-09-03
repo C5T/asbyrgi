@@ -1,6 +1,6 @@
 #!/bin/bash
 
-(cd tests; find . -iname '*.rego' | xargs node all_tests.js.regenerate.js >all_tests.js)
+(cd tests; find . -iname '*.rego' | sort | xargs node all_tests.js.regenerate.js >all_tests.js)
 
 cat >tests/mocha.html <<EOF
 <!doctype html>

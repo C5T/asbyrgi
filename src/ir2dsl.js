@@ -28,7 +28,7 @@ console.log('');
 let funcs = {};
 
 if ('builtin_funcs' in ir.static && ir.static.builtin_funcs !== null) {
-  ir.static.builtin_funcs.forEach(e => { funcs[e.name] = `BuiltinFunc(${e.name})`; });
+  ir.static.builtin_funcs.forEach(e => { funcs[e.name] = {builtin: true, name: e.name} });
 }
 
 let has_funcs = false;
@@ -48,7 +48,7 @@ if ('funcs' in ir && 'funcs' in ir.funcs && ir.funcs.funcs !== null) {
     console.log(`    EndFunctionArguments(${i})`);
     console.log(`    FunctionReturnValue(${i}, ${e.return})`);
     console.log(`  EndDeclareFunction(${i}, ${JSON.stringify(e.name)})`);
-    funcs[e.name] = i;
+    funcs[e.name] = {builtin: false, index: i};
   });
 }
 console.log(`EndDeclareFunctions(${num_funcs})`);
@@ -164,11 +164,20 @@ const statement_processors = {
   CallStmt: e => {
     let indexes = [`Local(${e.stmt.result})`];
     e.stmt.args.forEach(arg => indexes.push(wrap(arg)));
-    emit(`CallStmtBegin(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}), RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
+    const f = funcs[e.stmt.func];
+    if (f.builtin) {
+      emit(`CallBuiltinStmtBegin(${f.name}, Local(${e.stmt.result}), RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
+    } else {
+      emit(`CallUserStmtBegin(${f.index}, Local(${e.stmt.result}), RowCol(${fileName(e.stmt.file)}, ${e.stmt.row}, ${e.stmt.col}))`);
+    }
     e.stmt.args.forEach((arg, arg_index) => {
       emit(`  CallStmtPassArg(${arg_index}, ${wrap(arg)})`);
     });
-    emit(`CallStmtEnd(Func(${funcs[e.stmt.func]}), Local(${e.stmt.result}))`);
+    if (f.builtin) {
+      emit(`CallBuiltinStmtEnd(${f.name}, Local(${e.stmt.result}))`);
+    } else {
+      emit(`CallUserStmtEnd(${f.index}, Local(${e.stmt.result}))`);
+    }
   },
 
   WithStmt: e => {
