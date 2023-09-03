@@ -1,0 +1,39 @@
+#!/bin/bash
+
+ASBYRGI_CONTAINER_ID=$1
+REGO="$2"
+
+HEADER=$(head -n 1 "$REGO")
+
+if [[ "$HEADER" =~ \#!TEST ]] ; then
+  read -r UNUNSED_TEST PACKAGE RULE <<< "$HEADER"
+  NAME=$(basename "$REGO")
+  DIR=$(dirname "$REGO")
+
+  if [[ "$EXPORT_IR" != "" ]] ; then
+    echo -n "Creating '$REGO.ir' ..."
+    if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2ir $PACKAGE $RULE | jq . >"$NAME.ir") ; then
+      echo -e "\b\b\b\b: Done."
+    else
+      echo 'Failed.'
+    fi
+  fi
+
+  if [[ "$EXPORT_DSL" != "" ]] ; then
+    echo -n "Creating '$REGO.dsl' ..."
+    if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2dsl $PACKAGE $RULE >"$NAME.dsl") ; then
+      echo -e "\b\b\b\b: Done."
+    else
+      echo 'Failed.'
+    fi
+  fi
+
+  echo -n "Creating '$REGO.kt' ..."
+  if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2kt $PACKAGE $RULE >"$NAME.kt") ; then
+    echo -e "\b\b\b\b: Done."
+  else
+    echo 'Failed.'
+  fi
+else
+  echo "No '#!TEST' directive in '$REGO', skipping the file."
+fi

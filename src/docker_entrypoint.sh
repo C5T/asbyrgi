@@ -76,6 +76,29 @@ elif [ "$1" == "rego2cpp" ] ; then
     echo 'Easiest way to obtain `ASBYRGI_CONTAINER_ID`: run `export ASBYRGI_CONTAINER_ID=$(docker build -q .)` from this repo.'
     exit 1
   fi
+elif [ "$1" == "rego2kt" ] ; then
+  # TODO(dkorolev): Generate the proper Kotlin project, and return the archive. With the shared code too.
+  # TODO(dkorolev): Run `ktlint` from within the `Asbyrgi` container maybe?
+  # TODO(dkorolev): Don't `grep`, use OPA-native ways to add metadata into `.rego` files!
+  if [ $# == 3 ] ; then
+    if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | gunzip | tar x -O plan.json >/tmp/ir.json 2>/dev/null ; then
+      echo 'OPA run failed.' >/dev/stderr
+      exit 1
+    fi
+    if ! [ -s /tmp/ir.json ] ; then
+      echo 'No IR generated.' >/dev/stderr
+      exit 1
+    fi
+    # TODO(dkorolev): Pass "$2" and "$3" to the script.
+    (cat /src/preprocess.inl.kt; /src/ir2dsl.js /tmp/ir.json) | ucpp | grep -v '^#' | grep -v '^$' | sed 's/__INSERT_NEWLINE__/\n/g'
+    rm -f /tmp/ir.json
+    exit 0
+  else
+    echo 'Usage: cat policy.rego | docker run -i $ASBYRGI_CONTAINER_ID rego2kt myapi result'
+    echo 'The above command would generate the JavaScript for the rule `result` from the package `myapi` of `policy.rego`.'
+    echo 'Easiest way to obtain `ASBYRGI_CONTAINER_ID`: run `export ASBYRGI_CONTAINER_ID=$(docker build -q .)` from this repo.'
+    exit 1
+  fi
 elif [ "$1" == "gengolden" ] ; then
   if [ $# == 5 ] ; then
     opa build /input/"$2"

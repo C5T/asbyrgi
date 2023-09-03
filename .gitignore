@@ -2,6 +2,7 @@
 *.rego.dsl
 *.rego.ir
 *.rego.js
+*.rego.kt
 *.rego.*.cpp
 
 node_modules
