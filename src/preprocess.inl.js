@@ -301,9 +301,11 @@ const wrap_for_assignment = (x) => {
 #define AssignVarStmt(source, target, rowcol) target = wrap_for_assignment(source);
 // TODO(dkorolev): `BreakStmt`.
 // TODO(dkorolev): `CallDynamicStmt`.
-#define CallStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
-#define CallStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
+#define CallBuiltinStmtBegin(func, target, rowcol) target = (() => { let args = [];
+#define CallBuiltinStmtEnd(func, target) return opa_get_function_impl( {builtin_func: opa_builtins.func} )(args)})();
+#define CallUserStmtBegin(func, target, rowcol) target = (() => { let args = [];
+#define CallUserStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
 #define NotStmtBegin(rowcol) if ((() => {
 #define NotStmtEnd() ; return true; })() === true) return;
 #define DotStmt(source, key, target, rowcol) target = opa_object_get_by_key(source, key);
@@ -340,9 +342,6 @@ const wrap_for_assignment = (x) => {
 
 #define BareNumber(a) a
 #define StringConstantIndex(a) a
-
-#define Func(x) x
-#define BuiltinFunc(x) {builtin_func: opa_builtins.x}
 
 // TODO(dkorolev): The `result` should not be global.
 #define BeginPlan(plan_index, plan_name) plans[plan_name] = (input, data) => { let locals = [input, data]; let result = [];
