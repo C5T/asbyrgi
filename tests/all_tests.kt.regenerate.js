@@ -45,7 +45,11 @@ console.log('import org.junit.jupiter.api.Assertions.assertEquals');
 console.log('import org.junit.jupiter.api.Test');
 console.log('');
 console.log('fun runOpaTestCase(goldenJson: String, policy: (OpaValue, OpaValue) -> OpaValue, inputJson: String) {');
-    console.log('assertEquals(goldenJson, opaValueToJson(policy(jsonToOpaValue(Json.parseToJsonElement(inputJson)), OpaValue.ValueUndefined)).toString())');
+console.log('  assertEquals(goldenJson,');
+console.log('               opaValueToJson(policy(jsonToOpaValue(Json.parseToJsonElement(inputJson)),');
+console.log('                                     OpaValue.ValueUndefined)).toString())');
+console.log('}');
+console.log('');
 
 Object.keys(cases).sort().forEach(fn => {
   const t = cases[fn];

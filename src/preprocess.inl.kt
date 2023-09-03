@@ -8,7 +8,7 @@ class SmokeSumPolicyImplStatics { __INSERT_NEWLINE__ \
     companion object {
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
-    fun SmokeSumPolicyImpl(opaInput: OpaValue, opaData: OpaValue = OpaValue.ValueUndefined): OpaValue { __INSERT_NEWLINE__ \
+    fun CompareArrayPolicyImpl(opaInput: OpaValue, opaData: OpaValue = OpaValue.ValueUndefined): OpaValue { __INSERT_NEWLINE__ \
     return SmokeSumPolicyImplPlan0(opaInput, opaData) __INSERT_NEWLINE__ \
   }
 
@@ -44,14 +44,13 @@ fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>):
 #define EndBlock() }
 
 #if 0
-
-// TODO(dkorolev): Checks and early returns everywhere.
-
 #define ArrayAppendStmt(array, value, rowcol) if (array === undefined || array.t !== 'array') return; array.v.push(wrap_for_assignment(value));
-#define AssignIntStmt(value, target, rowcol) target = { t: 'number', v: value };  // TODO(dkorolev): Check the type, fail if wrong, I assume?
 #endif
+
+#define AssignIntStmt(value, target, rowcol) locals[target] = OpaValue.ValueInt(value)
 #define AssignVarOnceStmt(source, target, rowcol) if (!(localOrUndefined(locals, target) is OpaValue.ValueUndefined)) return@run __INSERT_NEWLINE__ locals[target] = localOrUndefined(locals, source)
 #define AssignVarStmt(source, target, rowcol) locals[target] = localOrUndefined(locals, source)
+
 // TODO(dkorolev): `BreakStmt`.
 // TODO(dkorolev): `CallDynamicStmt`.
 
@@ -67,27 +66,49 @@ fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>):
 #define NotStmtBegin(rowcol) if ((() => {
 #define NotStmtEnd() ; return true; })() === true) return;
 #endif
-#define DotStmt(source, key, target, rowcol) locals[target] = irGetByKey(localOrUndefined(locals, source), key)
-#if 0
-#define EqualStmt(a, b, rowcol) if (JSON.stringify(a) !== JSON.stringify(wrap_for_assignment(b))) return;
-#define IsArrayStmt(array, rowcol) if (array === undefined || array.t !== 'array') return;
-#endif
+
+#define DotStmt(source, key, target, rowcol) locals[target] = irGetByKey(localOrUndefined(locals, source), irStringPossiblyFromLocal(locals, key))
+#define EqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) != localOrUndefined(locals, b)) return@run
+#define IsArrayStmt(array, rowcol) if (!(localOrUndefined(locals, array) is OpaValue.ValueArray)) return@run
 #define IsDefinedStmt(source, rowcol) if (localOrUndefined(locals, source) is OpaValue.ValueUndefined) return@run
+
 #if 0
 #define IsObjectStmt(source, rowcol) if (source === undefined || source.t !== 'object') return;
-#define IsUndefinedStmt(source, rowcol) if (source !== undefined) return;
-#define LenStmt(source, target, rowcol) target = {t: 'number', v: Object.keys(source.v).length};  // TODO(dkorolev): Type checks!
+#endif
+
+#define IsUndefinedStmt(source, rowcol) if (!(localOrUndefined(locals, source) is OpaValue.ValueUndefined)) return@run
+
+// TODO(dkorolev): Double-check that `LenStmt` is for both arrays and object. Also sets, right?
+#define LenStmt(source, target, rowcol) \
+  locals[target] = run { __INSERT_NEWLINE__ \
+    val o = locals[source] __INSERT_NEWLINE__\
+    if (o is OpaValue.ValueArray) { __INSERT_NEWLINE__ \
+      return@run OpaValue.ValueInt(o.elements.size) __INSERT_NEWLINE__ \
+    } else if (o is OpaValue.ValueObject) { __INSERT_NEWLINE__ \
+      return@run OpaValue.ValueInt(o.fields.size) __INSERT_NEWLINE__ \
+    } else { __INSERT_NEWLINE__ \
+      return@run OpaValue.ValueUndefined __INSERT_NEWLINE__ \
+    } __INSERT_NEWLINE__ \
+  }
+
+#if 0
 #define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: []};
 #define MakeNullStmt(target, rowcol) target = { t: 'null', v: null };
-#define MakeNumberIntStmt(number_value, target, rowcol) target = { t: 'number', v: number_value };
-#define MakeNumberRefStmt(index, target, rowcol) target = { t: 'number', v: Number(static_strings[index]) };  // TODO(dkorolev): This is `Ref`!
 #endif
+
+#define MakeNumberIntStmt(number_value, target, rowcol) locals[target] = OpaValue.ValueInt(number_value)
+
+// TODO(dkorolev): Int? Maybe `Double`?
+#define MakeNumberRefStmt(index, target, rowcol) locals[target] = OpaValue.ValueInt(SmokeSumPolicyImplStatics.STATIC_STRINGS[index].toInt())
 #define MakeObjectStmt(target, rowcol) locals[target] = OpaValue.ValueObject(mutableMapOf())
+
 #if 0
 #define MakeSetStmt(target, rowcol) target = { t: 'set', v: {} };
 // NOTE(dkorolev): Skipping `NopStmt`.
 #endif
+
 #define NotEqualStmt(a, b, rowcol) if (a == b) return@run
+
 #if 0
 #define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
 #endif
@@ -105,7 +126,8 @@ fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>):
 #define ResetLocalStmt(target, rowcol) locals[target] = OpaValue.ValueUndefined
 
 #define ResultSetAddStmt(value, rowcol) result.add(localOrUndefined(locals, value))
-#define ReturnLocalStmt(source, rowcol) // retval = source <-- NOTE(dkorolev) Unneeded, as we have the index to return.
+#define ReturnLocalStmt(source, rowcol) // NOTE(dkorolev) Unneeded, as we have the index to return.
+
 #if 0
 #define ScanStmtBegin(source, key, value, rowcol) opa_scan(source, locals, key, value, () => {
 #define ScanStmtEnd() });
@@ -113,22 +135,15 @@ fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>):
 // TODO(dkorolev): `WithStmt`.
 
 #endif
+
 #define Local(a) a
 #define OperandLocal(a) a
 #define OperandBool(a) OpaValue.ValueBoolean(a)
 #define OperandStringIndex(a, string) string
-#if 0
-
 #define BareNumber(a) a
+
 #define StringConstantIndex(a) a
 
-#endif
-#define Func(x) OpaProvidedFunction(x)
-#define BuiltinFunc(x) #x
-#if 0
-
-// TODO(dkorolev): The `result` should not be global.
-#endif
 #define BeginPlan(plan_index, plan_name) \
 fun SmokeSumPolicyImplPlan##plan_index(opaInput: OpaValue, opaData: OpaValue): OpaValue { __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, OpaValue> = mutableMapOf() __INSERT_NEWLINE__ \
