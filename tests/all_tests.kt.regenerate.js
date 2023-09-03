@@ -44,10 +44,17 @@ console.log('import kotlinx.serialization.json.Json');
 console.log('import org.junit.jupiter.api.Assertions.assertEquals');
 console.log('import org.junit.jupiter.api.Test');
 console.log('');
+
 console.log('fun runOpaTestCase(goldenJson: String, policy: (OpaValue, OpaValue) -> OpaValue, inputJson: String) {');
-console.log('  assertEquals(goldenJson,');
-console.log('               opaValueToJson(policy(jsonToOpaValue(Json.parseToJsonElement(inputJson)),');
-console.log('                                     OpaValue.ValueUndefined)).toString())');
+console.log('    assertEquals(');
+console.log('        goldenJson,');
+console.log('        opaValueToJson(');
+console.log('            policy(');
+console.log('                jsonToOpaValue(Json.parseToJsonElement(inputJson)),');
+console.log('                OpaValue.ValueUndefined,');
+console.log('            ),');
+console.log('        ).toString(),');
+console.log('    )');
 console.log('}');
 console.log('');
 
