@@ -57,7 +57,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define CallStmtPassArg(arg_index, arg_value) callArgs[arg_index] = localOrUndefined(locals, arg_value)
 
 #define CallBuiltinStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, OpaValue> = mutableMapOf()
-#define CallBuiltinStmtEnd(func, target) opaBuiltinFunction_##func(callArgs) __INSERT_NEWLINE__ }
+#define CallBuiltinStmtEnd(func, target) OpaBuiltins.func(callArgs) __INSERT_NEWLINE__ }
 
 #define CallUserStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, OpaValue> = mutableMapOf()
 #define CallUserStmtEnd(func, target) __KOTLIN_CLASS_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
