@@ -40,6 +40,7 @@ let step1 = (() => {
 console.log('import kotlinx.serialization.json.Json');
 console.log('import org.junit.jupiter.api.Assertions.assertEquals');
 console.log('import org.junit.jupiter.api.Test');
+console.log('import org.junit.jupiter.api.DisplayName');
 console.log('');
 
 console.log(`fun run${kotlin_class_name}TestCase(goldenJson: String, inputJson: String) {`);
@@ -65,6 +66,7 @@ console.log('}');
       console.log('');
     }
     console.log('    @Test');
+    console.log(`    @DisplayName("""${JSON.stringify(t.tests[i])}""")`);
     console.log(`    fun test${kotlin_class_name}${i+1}() {`);
     console.log(`        run${kotlin_class_name}TestCase("""{"result":${JSON.stringify(t.goldens[i])}}""", ` +
                                                         `"""${JSON.stringify(t.tests[i])}""")`);
