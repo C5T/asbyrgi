@@ -63,7 +63,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define CallUserStmtEnd(func, target) __KOTLIN_CLASS_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
 
 #define NotStmtBegin(rowcol) if (run {
-#define NotStmtEnd() true } == RegoBlock.COMPLETED) return@run RegoBlock.INTERRUPTED
+#define NotStmtEnd() RegoBlock.COMPLETED } == RegoBlock.COMPLETED) return@run RegoBlock.INTERRUPTED
 
 #define DotStmt(source, key, target, rowcol) locals[target] = irGetByKey(localOrUndefined(locals, source), irStringPossiblyFromLocal(locals, key))
 #define EqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) != localOrUndefined(locals, b)) return@run RegoBlock.INTERRUPTED
