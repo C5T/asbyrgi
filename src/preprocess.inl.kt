@@ -71,11 +71,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define EqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) != localOrUndefined(locals, b)) return@run
 #define IsArrayStmt(array, rowcol) if (!(localOrUndefined(locals, array) is OpaValue.ValueArray)) return@run
 #define IsDefinedStmt(source, rowcol) if (localOrUndefined(locals, source) is OpaValue.ValueUndefined) return@run
-
-#if 0
-#define IsObjectStmt(source, rowcol) if (source === undefined || source.t !== 'object') return;
-#endif
-
+#define IsObjectStmt(object, rowcol) if (!(localOrUndefined(locals, object) is OpaValue.ValueObject)) return@run
 #define IsUndefinedStmt(source, rowcol) if (!(localOrUndefined(locals, source) is OpaValue.ValueUndefined)) return@run
 
 // TODO(dkorolev): Double-check that `LenStmt` is for both arrays and object. Also sets, right?
