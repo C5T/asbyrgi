@@ -3,13 +3,13 @@
 // TODO(dkorolev): Complete the transformation; this only passes the `tests/smoke/sum/policy.rego` test.
 
 #define BeginOPADSL() \
-class SmokeSumPolicyImplStatics { __INSERT_NEWLINE__ \
+class __KOTLIN_CLASS_NAME__Statics { __INSERT_NEWLINE__ \
     data class FunctionSignature(val name: String, val argIndex: Array<Int>, val retvalIndex: Int) __INSERT_NEWLINE__ \
     companion object {
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
-    fun CompareArrayPolicyImpl(opaInput: OpaValue, opaData: OpaValue = OpaValue.ValueUndefined): OpaValue { __INSERT_NEWLINE__ \
-    return SmokeSumPolicyImplPlan0(opaInput, opaData) __INSERT_NEWLINE__ \
+    fun __KOTLIN_CLASS_NAME__(opaInput: OpaValue, opaData: OpaValue = OpaValue.ValueUndefined): OpaValue { __INSERT_NEWLINE__ \
+    return __KOTLIN_CLASS_NAME__Plan0(opaInput, opaData) __INSERT_NEWLINE__ \
   }
 
 #define BeginStaticStrings() val STATIC_STRINGS: Array<String> = arrayOf(
@@ -28,9 +28,9 @@ class SmokeSumPolicyImplStatics { __INSERT_NEWLINE__ \
 
 
 #define BeginFunction(function_index, function_name) \
-fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>): OpaValue { __INSERT_NEWLINE__ \
-    val functionArgumentIndexes = SmokeSumPolicyImplStatics.FUNCTION_SIGNATURES[function_index].argIndex __INSERT_NEWLINE__ \
-    val functionReturnValueIndex = SmokeSumPolicyImplStatics.FUNCTION_SIGNATURES[function_index].retvalIndex __INSERT_NEWLINE__ \
+fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue>): OpaValue { __INSERT_NEWLINE__ \
+    val functionArgumentIndexes = __KOTLIN_CLASS_NAME__Statics.FUNCTION_SIGNATURES[function_index].argIndex __INSERT_NEWLINE__ \
+    val functionReturnValueIndex = __KOTLIN_CLASS_NAME__Statics.FUNCTION_SIGNATURES[function_index].retvalIndex __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, OpaValue> = mutableMapOf() __INSERT_NEWLINE__ \
     for (i in functionArgumentIndexes.indices) { __INSERT_NEWLINE__ \
         locals[functionArgumentIndexes[i]] = localOrUndefined(args, i) __INSERT_NEWLINE__ \
@@ -60,7 +60,7 @@ fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>):
 #define CallBuiltinStmtEnd(func, target) opaBuiltinFunction_##func(callArgs) __INSERT_NEWLINE__ }
 
 #define CallUserStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, OpaValue> = mutableMapOf()
-#define CallUserStmtEnd(func, target) SmokeSumPolicyImplFunction##func(callArgs) __INSERT_NEWLINE__ }
+#define CallUserStmtEnd(func, target) __KOTLIN_CLASS_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
 
 #if 0
 #define NotStmtBegin(rowcol) if ((() => {
@@ -99,7 +99,7 @@ fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>):
 #define MakeNumberIntStmt(number_value, target, rowcol) locals[target] = OpaValue.ValueInt(number_value)
 
 // TODO(dkorolev): Int? Maybe `Double`?
-#define MakeNumberRefStmt(index, target, rowcol) locals[target] = OpaValue.ValueInt(SmokeSumPolicyImplStatics.STATIC_STRINGS[index].toInt())
+#define MakeNumberRefStmt(index, target, rowcol) locals[target] = OpaValue.ValueInt(__KOTLIN_CLASS_NAME__Statics.STATIC_STRINGS[index].toInt())
 #define MakeObjectStmt(target, rowcol) locals[target] = OpaValue.ValueObject(mutableMapOf())
 
 #if 0
@@ -145,7 +145,7 @@ fun SmokeSumPolicyImplFunction##function_index(args: MutableMap<Int, OpaValue>):
 #define StringConstantIndex(a) a
 
 #define BeginPlan(plan_index, plan_name) \
-fun SmokeSumPolicyImplPlan##plan_index(opaInput: OpaValue, opaData: OpaValue): OpaValue { __INSERT_NEWLINE__ \
+fun __KOTLIN_CLASS_NAME__Plan##plan_index(opaInput: OpaValue, opaData: OpaValue): OpaValue { __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, OpaValue> = mutableMapOf() __INSERT_NEWLINE__ \
     val result: ArrayList<OpaValue> = arrayListOf() __INSERT_NEWLINE__ \
     locals[0] = opaInput __INSERT_NEWLINE__ \

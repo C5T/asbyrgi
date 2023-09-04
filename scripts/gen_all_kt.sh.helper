@@ -29,7 +29,13 @@ if [[ "$HEADER" =~ \#!TEST ]] ; then
   fi
 
   echo -n "Creating '$REGO.kt' ..."
-  if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2kt $PACKAGE $RULE >"$NAME.kt") ; then
+  KOTLIN_CLASS_NAME=$(cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID evalterm data.$PACKAGE.kotlin_class_name)
+  if [ "$KOTLIN_CLASS_NAME" == "" ] || [ "$KOTLIN_CLASS_NAME" == "null" ] ; then
+    echo -e '\b\b\b\b, failed, no `kotlin_class_name` defined in the respective package.'
+    exit 1
+  fi
+  echo -ne "\b\b\b\b, class \"$KOTLIN_CLASS_NAME\" ..."
+  if (cd "$DIR"; cat "$NAME" | docker run -i $ASBYRGI_CONTAINER_ID rego2kt $PACKAGE $RULE $KOTLIN_CLASS_NAME >"$NAME.kt") ; then
     echo -e "\b\b\b\b: Done."
   else
     echo 'Failed.'
