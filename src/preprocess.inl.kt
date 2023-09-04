@@ -20,7 +20,7 @@ class __KOTLIN_CLASS_NAME__Statics { __INSERT_NEWLINE__ \
 #define EndDeclareFunctions(total_functions) ) __INSERT_NEWLINE__ } __INSERT_NEWLINE__ } __INSERT_NEWLINE__
 
 #define BeginDeclareFunction(function_index, function_name) FunctionSignature(function_name
-#define EndDeclareFunction(function_index, function_name) )
+#define EndDeclareFunction(function_index, function_name) ),
 #define BeginFunctionArguments(function_index, args_count) ,arrayOf(
 #define EndFunctionArguments(function_index) )
 #define FunctionArgument(arg_index, local_index) local_index,
