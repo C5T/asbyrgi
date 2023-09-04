@@ -67,10 +67,9 @@ console.log('}');
     }
     console.log('    @Test');
     console.log(`    @DisplayName("""${JSON.stringify(t.tests[i])}""")`);
-    console.log(`    fun test${kotlin_class_name}${i+1}() {`);
-    console.log(`        run${kotlin_class_name}TestCase("""{"result":${JSON.stringify(t.goldens[i])}}""", ` +
-                                                        `"""${JSON.stringify(t.tests[i])}""")`);
-    console.log(`    }`);
+    console.log(`    fun test${kotlin_class_name}${i+1}() = ` +
+                `run${kotlin_class_name}TestCase("""{"result":${JSON.stringify(t.goldens[i])}}""", ` +
+                `"""${JSON.stringify(t.tests[i])}""")`);
   }
   console.log(`}`);
 })();
