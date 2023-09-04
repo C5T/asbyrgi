@@ -41,14 +41,14 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 
 
 #define BeginBlock() run {
-#define EndBlock() }
+#define EndBlock() RegoBlock.COMPLETED __INSERT_NEWLINE__ }
 
 #if 0
 #define ArrayAppendStmt(array, value, rowcol) if (array === undefined || array.t !== 'array') return; array.v.push(wrap_for_assignment(value));
 #endif
 
 #define AssignIntStmt(value, target, rowcol) locals[target] = OpaValue.ValueInt(value)
-#define AssignVarOnceStmt(source, target, rowcol) if (!(localOrUndefined(locals, target) is OpaValue.ValueUndefined)) return@run __INSERT_NEWLINE__ locals[target] = localOrUndefined(locals, source)
+#define AssignVarOnceStmt(source, target, rowcol) if (!(localOrUndefined(locals, target) is OpaValue.ValueUndefined)) return@run RegoBlock.INTERRUPTED __INSERT_NEWLINE__ locals[target] = localOrUndefined(locals, source)
 #define AssignVarStmt(source, target, rowcol) locals[target] = localOrUndefined(locals, source)
 
 // TODO(dkorolev): `BreakStmt`.
@@ -62,17 +62,15 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define CallUserStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, OpaValue> = mutableMapOf()
 #define CallUserStmtEnd(func, target) __KOTLIN_CLASS_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
 
-#if 0
-#define NotStmtBegin(rowcol) if ((() => {
-#define NotStmtEnd() ; return true; })() === true) return;
-#endif
+#define NotStmtBegin(rowcol) if (run {
+#define NotStmtEnd() true } == RegoBlock.COMPLETED) return@run RegoBlock.INTERRUPTED
 
 #define DotStmt(source, key, target, rowcol) locals[target] = irGetByKey(localOrUndefined(locals, source), irStringPossiblyFromLocal(locals, key))
-#define EqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) != localOrUndefined(locals, b)) return@run
-#define IsArrayStmt(array, rowcol) if (!(localOrUndefined(locals, array) is OpaValue.ValueArray)) return@run
-#define IsDefinedStmt(source, rowcol) if (localOrUndefined(locals, source) is OpaValue.ValueUndefined) return@run
-#define IsObjectStmt(object, rowcol) if (!(localOrUndefined(locals, object) is OpaValue.ValueObject)) return@run
-#define IsUndefinedStmt(source, rowcol) if (!(localOrUndefined(locals, source) is OpaValue.ValueUndefined)) return@run
+#define EqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) != localOrUndefined(locals, b)) return@run RegoBlock.INTERRUPTED
+#define IsArrayStmt(array, rowcol) if (!(localOrUndefined(locals, array) is OpaValue.ValueArray)) return@run RegoBlock.INTERRUPTED
+#define IsDefinedStmt(source, rowcol) if (localOrUndefined(locals, source) is OpaValue.ValueUndefined) return@run RegoBlock.INTERRUPTED
+#define IsObjectStmt(object, rowcol) if (!(localOrUndefined(locals, object) is OpaValue.ValueObject)) return@run RegoBlock.INTERRUPTED
+#define IsUndefinedStmt(source, rowcol) if (!(localOrUndefined(locals, source) is OpaValue.ValueUndefined)) return@run RegoBlock.INTERRUPTED
 
 // TODO(dkorolev): Double-check that `LenStmt` is for both arrays and object. Also sets, right?
 #define LenStmt(source, target, rowcol) \
@@ -103,7 +101,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 // NOTE(dkorolev): Skipping `NopStmt`.
 #endif
 
-#define NotEqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) == localOrUndefined(locals, b)) return@run
+#define NotEqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) == localOrUndefined(locals, b)) return@run RegoBlock.INTERRUPTED
 
 #if 0
 #define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
