@@ -103,7 +103,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 // NOTE(dkorolev): Skipping `NopStmt`.
 #endif
 
-#define NotEqualStmt(a, b, rowcol) if (a == b) return@run
+#define NotEqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) == localOrUndefined(locals, b)) return@run
 
 #if 0
 #define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!

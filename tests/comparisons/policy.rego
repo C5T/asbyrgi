@@ -2,6 +2,8 @@
 
 package smoke
 
+kotlin_class_name := "ComparisonsPolicy"
+
 default comparisons = false
 
 comparisons {
