@@ -1,11 +1,12 @@
 const fs = require('fs');
 
-if (process.argv.length < 3) {
-  console.log('Synopsis: node generate_kt_test.js path/to/tests.json KotlinClassName');
+if (process.argv.length < 4) {
+  console.log('Synopsis: node generate_kt_test.js path/to/some_policy.rego path/to/ KotlinClassName');
   console.log(process.argv);
   process.exit(1);
 }
 
+const policy_file_name = process.argv[process.argv.length - 3]
 const tests_dir_name = process.argv[process.argv.length - 2]
 const kotlin_class_name = process.argv[process.argv.length - 1]
 
@@ -20,7 +21,7 @@ let step1 = (() => {
       process.exit(1);
     }
   })();
-  const goldens_path = tests_dir_name + '/policy.rego.goldens.json';
+  const goldens_path = policy_file_name + '.goldens.json';
   const goldens = (() => {
     try {
       return fs.readFileSync(goldens_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(JSON.parse);

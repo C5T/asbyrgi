@@ -87,8 +87,9 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 
 #if 0
 #define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: []};
-#define MakeNullStmt(target, rowcol) target = { t: 'null', v: null };
 #endif
+
+#define MakeNullStmt(target, rowcol) locals[target] = OpaValue.ValueNull
 
 #define MakeNumberIntStmt(number_value, target, rowcol) locals[target] = OpaValue.ValueInt(number_value)
 

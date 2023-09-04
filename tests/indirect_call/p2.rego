@@ -1,6 +1,9 @@
 #!TEST the answer
 
 package the
+
+kotlin_class_name := "IndirectCallP2Policy"
+
 default answer = null
 answer = input.a + input.b { input.f == "add" }
 answer = input.a * input.b { input.f == "mul" }
