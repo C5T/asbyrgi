@@ -4,6 +4,10 @@ set -e
 
 CONTAINER_ID=${ASBYRGI_CONTAINER_ID:-$(docker build -q .)}
 
+echo "CLEAN TEST BEGIN"
+echo '{"x":false}' | docker run -v $PWD/tests/compare/boolean:/tests/compare/boolean -i $CONTAINER_ID eval --data tests/compare/boolean/policy.rego --input /dev/stdin data.comparison.equals
+echo "CLEAN TEST END"
+
 rm -rf kt_test
 
 docker run -i $CONTAINER_ID kt_test.tar.gz | tar xz
