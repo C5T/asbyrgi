@@ -43,7 +43,7 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
         | docker run -v "$PWD/$(dirname "$REGO_TEST_CASE")":/$(dirname "$REGO_TEST_CASE") -i $CONTAINER_ID eval --data "$REGO_TEST_CASE" --input /dev/stdin data.$PACKAGE.$RULE \
         | jq -c .result[0].expressions[0].value
       done < "$(dirname "$REGO_TEST_CASE")/tests.json" \
-      | node tests/compose_kt_test.js $REGO_KT_IMPL_NAME \
+      | docker run -i $CONTAINER_ID compose_kt_test $REGO_KT_IMPL_NAME \
       > kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
     fi
   else
