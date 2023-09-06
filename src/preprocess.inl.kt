@@ -8,7 +8,7 @@ class __KOTLIN_CLASS_NAME__Statics { __INSERT_NEWLINE__ \
     companion object {
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
-    fun __KOTLIN_CLASS_NAME__(opaInput: AuthzValue, opaData: AuthzValue = AuthzValue.ValueUndefined): AuthzValue { __INSERT_NEWLINE__ \
+    fun __KOTLIN_CLASS_NAME__(opaInput: AuthzValue, opaData: AuthzValue = AuthzValue.UNDEFINED): AuthzValue { __INSERT_NEWLINE__ \
     return __KOTLIN_CLASS_NAME__Plan0(opaInput, opaData) __INSERT_NEWLINE__ \
   }
 
@@ -45,8 +45,8 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 
 #define ArrayAppendStmt(array, value, rowcol) opaAppendToArray(localOrUndefined(locals, array), localOrUndefined(locals, value))
 
-#define AssignIntStmt(value, target, rowcol) locals[target] = AuthzValue.ValueInt(value)
-#define AssignVarOnceStmt(source, target, rowcol) if (!(localOrUndefined(locals, target) is AuthzValue.ValueUndefined)) return@run RegoBlock.INTERRUPTED __INSERT_NEWLINE__ locals[target] = localOrUndefined(locals, source)
+#define AssignIntStmt(value, target, rowcol) locals[target] = AuthzValue.INT(value)
+#define AssignVarOnceStmt(source, target, rowcol) if (!(localOrUndefined(locals, target) is AuthzValue.UNDEFINED)) return@run RegoBlock.INTERRUPTED __INSERT_NEWLINE__ locals[target] = localOrUndefined(locals, source)
 #define AssignVarStmt(source, target, rowcol) locals[target] = localOrUndefined(locals, source)
 
 // TODO(dkorolev): `BreakStmt`.
@@ -65,35 +65,35 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 
 #define DotStmt(source, key, target, rowcol) locals[target] = irGetByKey(localOrUndefined(locals, source), irStringPossiblyFromLocal(locals, key))
 #define EqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) != localOrUndefined(locals, b)) return@run RegoBlock.INTERRUPTED
-#define IsArrayStmt(array, rowcol) if (!(localOrUndefined(locals, array) is AuthzValue.ValueArray)) return@run RegoBlock.INTERRUPTED
-#define IsDefinedStmt(source, rowcol) if (localOrUndefined(locals, source) is AuthzValue.ValueUndefined) return@run RegoBlock.INTERRUPTED
-#define IsObjectStmt(object, rowcol) if (!(localOrUndefined(locals, object) is AuthzValue.ValueObject)) return@run RegoBlock.INTERRUPTED
-#define IsUndefinedStmt(source, rowcol) if (!(localOrUndefined(locals, source) is AuthzValue.ValueUndefined)) return@run RegoBlock.INTERRUPTED
+#define IsArrayStmt(array, rowcol) if (!(localOrUndefined(locals, array) is AuthzValue.ARRAY)) return@run RegoBlock.INTERRUPTED
+#define IsDefinedStmt(source, rowcol) if (localOrUndefined(locals, source) is AuthzValue.UNDEFINED) return@run RegoBlock.INTERRUPTED
+#define IsObjectStmt(object, rowcol) if (!(localOrUndefined(locals, object) is AuthzValue.OBJECT)) return@run RegoBlock.INTERRUPTED
+#define IsUndefinedStmt(source, rowcol) if (!(localOrUndefined(locals, source) is AuthzValue.UNDEFINED)) return@run RegoBlock.INTERRUPTED
 
 // TODO(dkorolev): Double-check that `LenStmt` is for both arrays and object. Also sets, right?
 #define LenStmt(source, target, rowcol) \
   locals[target] = run { __INSERT_NEWLINE__ \
     val o = locals[source] __INSERT_NEWLINE__\
-    if (o is AuthzValue.ValueArray) { __INSERT_NEWLINE__ \
-      return@run AuthzValue.ValueInt(o.elements.size) __INSERT_NEWLINE__ \
-    } else if (o is AuthzValue.ValueObject) { __INSERT_NEWLINE__ \
-      return@run AuthzValue.ValueInt(o.fields.size) __INSERT_NEWLINE__ \
+    if (o is AuthzValue.ARRAY) { __INSERT_NEWLINE__ \
+      return@run AuthzValue.INT(o.elements.size) __INSERT_NEWLINE__ \
+    } else if (o is AuthzValue.OBJECT) { __INSERT_NEWLINE__ \
+      return@run AuthzValue.INT(o.fields.size) __INSERT_NEWLINE__ \
     } else { __INSERT_NEWLINE__ \
-      return@run AuthzValue.ValueUndefined __INSERT_NEWLINE__ \
+      return@run AuthzValue.UNDEFINED __INSERT_NEWLINE__ \
     } __INSERT_NEWLINE__ \
   }
 
 // TODO(dkorolev): Initialize with capacity?
-#define MakeArrayStmt(capacity, target, rowcol) locals[target] = AuthzValue.ValueArray(arrayListOf())
-#define MakeNullStmt(target, rowcol) locals[target] = AuthzValue.ValueNull
+#define MakeArrayStmt(capacity, target, rowcol) locals[target] = AuthzValue.ARRAY(arrayListOf())
+#define MakeNullStmt(target, rowcol) locals[target] = AuthzValue.NULL
 
-#define MakeNumberIntStmt(number_value, target, rowcol) locals[target] = AuthzValue.ValueInt(number_value)
+#define MakeNumberIntStmt(number_value, target, rowcol) locals[target] = AuthzValue.INT(number_value)
 
 // TODO(dkorolev): Int? Maybe `Double`?
-#define MakeNumberRefStmt(index, target, rowcol) locals[target] = AuthzValue.ValueInt(__KOTLIN_CLASS_NAME__Statics.STATIC_STRINGS[index].toInt())
-#define MakeObjectStmt(target, rowcol) locals[target] = AuthzValue.ValueObject(mutableMapOf())
+#define MakeNumberRefStmt(index, target, rowcol) locals[target] = AuthzValue.INT(__KOTLIN_CLASS_NAME__Statics.STATIC_STRINGS[index].toInt())
+#define MakeObjectStmt(target, rowcol) locals[target] = AuthzValue.OBJECT(mutableMapOf())
 
-#define MakeSetStmt(target, rowcol) locals[target] = AuthzValue.ValueSet(mutableSetOf())
+#define MakeSetStmt(target, rowcol) locals[target] = AuthzValue.SET(mutableSetOf())
 
 // NOTE(dkorolev): Skipping `NopStmt`.
 
@@ -105,7 +105,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 #define ObjectInsertStmt(key, value, object, rowcol) \
     run { __INSERT_NEWLINE__ \
         val o = locals[object] __INSERT_NEWLINE__ \
-        if (o is AuthzValue.ValueObject) { __INSERT_NEWLINE__ \
+        if (o is AuthzValue.OBJECT) { __INSERT_NEWLINE__ \
             o.fields.put(key, localOrUndefined(locals, value)) __INSERT_NEWLINE__ \
         } __INSERT_NEWLINE__ \
     }
@@ -113,7 +113,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 #define ObjectMergeStmt(a, b, target, rowcol) target = { FIXME_MERGED: [a, b] };  // TODO(dkorolev): Implement this.
 #endif
 
-#define ResetLocalStmt(target, rowcol) locals[target] = AuthzValue.ValueUndefined
+#define ResetLocalStmt(target, rowcol) locals[target] = AuthzValue.UNDEFINED
 
 #define ResultSetAddStmt(value, rowcol) result.add(localOrUndefined(locals, value))
 #define ReturnLocalStmt(source, rowcol) // NOTE(dkorolev) Unneeded, as we have the index to return.
@@ -143,11 +143,11 @@ fun __KOTLIN_CLASS_NAME__Plan##plan_index(opaInput: AuthzValue, opaData: AuthzVa
 
 #define EndPlan(plan_index, plan_name)  \
     if (result.size == 0) { __INSERT_NEWLINE__ \
-        return AuthzValue.ValueUndefined __INSERT_NEWLINE__ \
+        return AuthzValue.UNDEFINED __INSERT_NEWLINE__ \
     } else if (result.size == 1) { __INSERT_NEWLINE__ \
         return result[0] __INSERT_NEWLINE__ \
     } else { __INSERT_NEWLINE__ \
-        return AuthzValue.ValueArray(result) __INSERT_NEWLINE__ \
+        return AuthzValue.ARRAY(result) __INSERT_NEWLINE__ \
     } __INSERT_NEWLINE__ \
 }
 
