@@ -18,6 +18,23 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
     HEADER=$(head -n 1 "$REGO_TEST_CASE")
     if [[ "$HEADER" =~ \#!TEST ]] ; then
       read -r UNUNSED_TEST PACKAGE RULE <<< "$HEADER"
+
+      echo
+      echo "CLEAN TEST BEGIN 1"
+      while IFS= read -r line; do
+        echo -en "$line\t"
+        echo "$line"
+      done < "$(dirname "$REGO_TEST_CASE")/tests.json"
+      echo "CLEAN TEST END 1"
+
+      echo
+      echo "CLEAN TEST BEGIN 2"
+      while IFS= read -r line; do
+        echo -en "$line\t"
+        echo "$line"
+      done < "$(dirname "$REGO_TEST_CASE")/tests.json" | tr - -
+      echo "CLEAN TEST END 2"
+
       while IFS= read -r line; do
         echo -en "$line\t"
         echo "$line" \
@@ -27,8 +44,6 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
       | node tests/compose_kt_test.js $REGO_KT_IMPL_NAME \
       > kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
     fi
-
-    df -h  # <-- THIS SEEMS TO BE THE PROBLEM ?!?
   else
     echo "Skipping '$REGO_TEST_CASE' because it has no 'kotlin_class_name'."
   fi
