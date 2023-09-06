@@ -93,10 +93,9 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define MakeNumberRefStmt(index, target, rowcol) locals[target] = OpaValue.ValueInt(__KOTLIN_CLASS_NAME__Statics.STATIC_STRINGS[index].toInt())
 #define MakeObjectStmt(target, rowcol) locals[target] = OpaValue.ValueObject(mutableMapOf())
 
-#if 0
-#define MakeSetStmt(target, rowcol) target = { t: 'set', v: {} };
+#define MakeSetStmt(target, rowcol) locals[target] = OpaValue.ValueSet(mutableSetOf())
+
 // NOTE(dkorolev): Skipping `NopStmt`.
-#endif
 
 #define NotEqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) == localOrUndefined(locals, b)) return@run RegoBlock.INTERRUPTED
 
@@ -122,9 +121,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define ScanStmtBegin(source, key, value, rowcol) opaScan(locals, localOrUndefined(locals, source), key, value, inner = { __INSERT_NEWLINE__ run {
 #define ScanStmtEnd() RegoBlock.COMPLETED __INSERT_NEWLINE__ } __INSERT_NEWLINE__ })
 
-#if 0
-#define SetAddStmt(value, set, rowcol) if (!(value.t in set.v)) { set.v[value.t] = new Set(); } set.v[value.t].add(value.v);
-#endif
+#define SetAddStmt(value, set, rowcol) opaAddToSet(localOrUndefined(locals, set), localOrUndefined(locals, value))
 
 // TODO(dkorolev): `WithStmt`.
 
