@@ -1,4 +1,4 @@
-name: TMP run Kotlin tests
+name: Kotlin Transpilation Tests
 
 on:
   workflow_dispatch:
