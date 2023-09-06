@@ -30,7 +30,7 @@ rl.on('line', (line) => {
     console.log('        opaValueToJson(');
     console.log(`            ${kotlin_class_name}(`);
     console.log('                jsonToOpaValue(Json.parseToJsonElement(inputJson)),');
-    console.log('                AuthzValue.ValueUndefined,');
+    console.log('                AuthzValue.UNDEFINED,');
     console.log('            ),');
     console.log('        ).toString(),');
     console.log('    )');
