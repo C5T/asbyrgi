@@ -2,6 +2,8 @@ name: TMP run Kotlin tests
 
 on:
   workflow_dispatch:
+  # NOTE(dkorolev): `on push` is the only way to run this action, since we're not on the `main` branch yet =)
+  push:
 
 jobs:
   tmp-run-kotlin-tests:
