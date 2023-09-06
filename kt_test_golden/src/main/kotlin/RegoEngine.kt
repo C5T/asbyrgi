@@ -1,3 +1,11 @@
+// DO NOT EDIT!
+//
+// This file comes from Asbyrgi. It may and will evolve.
+//
+// If this file is checked into your repository, it is only there to simplify running & debugging the code.
+// It is safe to assume it will eventually be overwritten by a newer verison.
+// In fact, it may even be overwritten by a git hook or a Github action, so, please, let it live as is.
+
 import kotlin.system.exitProcess
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -300,6 +308,7 @@ class RegoBuiltins {
     class internal {
         companion object {
             fun member_2(args: MutableMap<Int, AuthzValue>): AuthzValue {
+                // NOTE(dkorolev): This `member_2` OPA builtin checks whether a value is present in a set.
                 val a: AuthzValue = regoVal(args, 0)
                 val b: AuthzValue = regoVal(args, 1)
                 if (b is AuthzValue.SET) {
