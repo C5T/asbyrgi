@@ -3,7 +3,7 @@ name: Build the Asbyrgi container
 on:
   workflow_dispatch:
   # TEMPORARY!
-  push:
+  # push:
 
 env:
   GHCR_USERNAME: ${{ github.actor }}
