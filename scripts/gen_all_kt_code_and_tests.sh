@@ -4,7 +4,7 @@ set -e
 
 rm -rf kt_test
 
-docker run -i $(docker build -q .) kt_test.tar.gz | tar xz
+docker run -i $(docker build -q .) kt_test.tar.gz | tar xzv
 
 echo CHECKPOINT 1
 ls -lasR kt_test
