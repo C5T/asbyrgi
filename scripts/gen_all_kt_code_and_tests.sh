@@ -4,10 +4,6 @@ set -e
 
 CONTAINER_ID=${ASBYRGI_CONTAINER_ID:-$(docker build -q .)}
 
-echo "CLEAN TEST BEGIN"
-echo '{"x":false}' | docker run -v $PWD/tests/compare/boolean:/tests/compare/boolean -i $CONTAINER_ID eval --data tests/compare/boolean/policy.rego --input /dev/stdin data.comparison.equals
-echo "CLEAN TEST END"
-
 rm -rf kt_test
 
 docker run -i $CONTAINER_ID kt_test.tar.gz | tar xz
@@ -31,6 +27,8 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
       | node tests/compose_kt_test.js $REGO_KT_IMPL_NAME \
       > kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
     fi
+
+    df -h  # <-- THIS SEEMS TO BE THE PROBLEM ?!?
   else
     echo "Skipping '$REGO_TEST_CASE' because it has no 'kotlin_class_name'."
   fi
