@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonPrimitive
 sealed class AuthzValue {
     object ValueUndefined : AuthzValue()
     object ValueNull : AuthzValue()
-    data class ValueBoolean(val boolean: Boolean) : AuthzValue()
+    data class BOOLEAN(val boolean: Boolean) : AuthzValue()
     data class ValueInt(val number: Int) : AuthzValue()
     data class ValueDouble(val number: Double) : AuthzValue()
     data class ValueString(val string: String) : AuthzValue()
@@ -37,9 +37,9 @@ fun jsonToOpaValue(element: JsonElement): AuthzValue = when (element) {
         } else {
             // NOTE(dkorolev): Hack but works. I couldn't find a better way with `kotlinx.serialization`.
             if (tmp.content == "true") {
-                AuthzValue.ValueBoolean(true)
+                AuthzValue.BOOLEAN(true)
             } else if (tmp.content == "false") {
-                AuthzValue.ValueBoolean(false)
+                AuthzValue.BOOLEAN(false)
             } else {
                 val v: Int? = tmp.content.toIntOrNull()
                 if (v != null) {
@@ -62,7 +62,7 @@ fun jsonToOpaValue(element: JsonElement): AuthzValue = when (element) {
 fun opaValueToJson(node: AuthzValue): JsonElement = when (node) {
     is AuthzValue.ValueUndefined -> JsonPrimitive("***UNDEFINED***")
     is AuthzValue.ValueNull -> JsonNull
-    is AuthzValue.ValueBoolean -> JsonPrimitive(node.boolean)
+    is AuthzValue.BOOLEAN -> JsonPrimitive(node.boolean)
     is AuthzValue.ValueString -> JsonPrimitive(node.string)
     is AuthzValue.ValueInt -> JsonPrimitive(node.number)
     is AuthzValue.ValueDouble -> JsonPrimitive(node.number)
@@ -146,7 +146,7 @@ enum class RegoBlock { INTERRUPTED, COMPLETED }
 fun localOrUndefined(locals: MutableMap<Int, AuthzValue>, index: Int): AuthzValue = locals.getOrElse(index, { AuthzValue.ValueUndefined })
 
 // TODO(dkorolev): Rename `localOrUndefined` into some `getValue`.
-fun localOrUndefined(unused: MutableMap<Int, AuthzValue>, value: AuthzValue.ValueBoolean): AuthzValue = value
+fun localOrUndefined(unused: MutableMap<Int, AuthzValue>, value: AuthzValue.BOOLEAN): AuthzValue = value
 fun localOrUndefined(unused: MutableMap<Int, AuthzValue>, value: String): AuthzValue = AuthzValue.ValueString(value)
 
 // TODO(dkorolev): Rename this, and the value is not a `String`, but it can be an index too!
@@ -183,7 +183,7 @@ class OpaBuiltins {
             val a: AuthzValue = localOrUndefined(args, 0)
             val b: AuthzValue = localOrUndefined(args, 1)
             if (a is AuthzValue.ValueInt && b is AuthzValue.ValueInt) {
-                return AuthzValue.ValueBoolean(a.number < b.number)
+                return AuthzValue.BOOLEAN(a.number < b.number)
             } else {
                 return AuthzValue.ValueUndefined
             }
@@ -194,7 +194,7 @@ class OpaBuiltins {
             val a: AuthzValue = localOrUndefined(args, 0)
             val b: AuthzValue = localOrUndefined(args, 1)
             if (a is AuthzValue.ValueInt && b is AuthzValue.ValueInt) {
-                return AuthzValue.ValueBoolean(a.number > b.number)
+                return AuthzValue.BOOLEAN(a.number > b.number)
             } else {
                 return AuthzValue.ValueUndefined
             }
@@ -205,7 +205,7 @@ class OpaBuiltins {
             val a: AuthzValue = localOrUndefined(args, 0)
             val b: AuthzValue = localOrUndefined(args, 1)
             if (a is AuthzValue.ValueInt && b is AuthzValue.ValueInt) {
-                return AuthzValue.ValueBoolean(a.number <= b.number)
+                return AuthzValue.BOOLEAN(a.number <= b.number)
             } else {
                 return AuthzValue.ValueUndefined
             }
@@ -216,7 +216,7 @@ class OpaBuiltins {
             val a: AuthzValue = localOrUndefined(args, 0)
             val b: AuthzValue = localOrUndefined(args, 1)
             if (a is AuthzValue.ValueInt && b is AuthzValue.ValueInt) {
-                return AuthzValue.ValueBoolean(a.number >= b.number)
+                return AuthzValue.BOOLEAN(a.number >= b.number)
             } else {
                 return AuthzValue.ValueUndefined
             }
@@ -298,7 +298,7 @@ class OpaBuiltins {
                 val a: AuthzValue = localOrUndefined(args, 0)
                 val b: AuthzValue = localOrUndefined(args, 1)
                 if (b is AuthzValue.ValueSet) {
-                    return AuthzValue.ValueBoolean(b.elems.contains(a))
+                    return AuthzValue.BOOLEAN(b.elems.contains(a))
                 } else {
                     // TODO(dkorolev): This should be a proper error!
                     return AuthzValue.ValueUndefined

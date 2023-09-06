@@ -127,7 +127,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 
 #define Local(a) a
 #define OperandLocal(a) a
-#define OperandBool(a) AuthzValue.ValueBoolean(a)
+#define OperandBool(a) AuthzValue.BOOLEAN(a)
 #define OperandStringIndex(a, string) string
 #define BareNumber(a) a
 
