@@ -16,18 +16,21 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
     cp $REGO_TEST_CASE.kt kt_test/src/main/kotlin/$REGO_KT_IMPL_NAME.kt
 
     HEADER=$(head -n 1 "$REGO_TEST_CASE")
+    TMPFILE=$(mktemp)
     if [[ "$HEADER" =~ \#!TEST ]] ; then
       read -r UNUNSED_TEST PACKAGE RULE <<< "$HEADER"
 
       while IFS= read -r line; do
+        echo "$line" >$TMPFILE
         echo -en "$line\t"
-        docker run -i $CONTAINER_ID eval --data "$REGO_TEST_CASE" --input <(echo "$line") data.$PACKAGE.$RULE \
+        docker run -i $CONTAINER_ID eval --data "$REGO_TEST_CASE" --input $TMPFILE data.$PACKAGE.$RULE \
         | jq .result[0].expressions[0].value
       done < "$(dirname "$REGO_TEST_CASE")/tests.json" | tr - - \
       | node tests/compose_kt_test.js $REGO_KT_IMPL_NAME \
       > tee kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
     fi
 
+    rm $TMPFILE
   else
     echo "Skipping '$REGO_TEST_CASE' because it has no 'kotlin_class_name'."
   fi
