@@ -25,7 +25,7 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
         | jq .result[0].expressions[0].value
       done < "$(dirname "$REGO_TEST_CASE")/tests.json" | tr - - \
       | node tests/compose_kt_test.js $REGO_KT_IMPL_NAME \
-      > tee kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
+      > kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
     fi
   else
     echo "Skipping '$REGO_TEST_CASE' because it has no 'kotlin_class_name'."

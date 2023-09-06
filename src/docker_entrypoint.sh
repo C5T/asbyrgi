@@ -139,7 +139,9 @@ elif [ "$1" == "ktRunTests" ] ; then
   (cd kt_test; gradle test -Dtestlogger.logLevel=quiet)
 else
   opa $*
-  echo
-  echo 'Last but not least: This is the Asbyrgi container, not just the OPA binary.'
-  echo 'Thus, it has a lot more commands, including, but not limited to, rego2ir, rego2dsl, rego2kt, etc.'
+  if [ "$@" -eq "" ] ; then
+    echo
+    echo 'Last but not least: This is the Asbyrgi container, not just the OPA binary.'
+    echo 'Thus, it has a lot more commands, including, but not limited to, rego2ir, rego2dsl, rego2kt, etc.'
+  fi
 fi
