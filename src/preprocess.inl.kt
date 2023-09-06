@@ -43,9 +43,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define BeginBlock() run {
 #define EndBlock() RegoBlock.COMPLETED __INSERT_NEWLINE__ }
 
-#if 0
-#define ArrayAppendStmt(array, value, rowcol) if (array === undefined || array.t !== 'array') return; array.v.push(wrap_for_assignment(value));
-#endif
+#define ArrayAppendStmt(array, value, rowcol) opaAppendToArray(localOrUndefined(locals, array), localOrUndefined(locals, value))
 
 #define AssignIntStmt(value, target, rowcol) locals[target] = OpaValue.ValueInt(value)
 #define AssignVarOnceStmt(source, target, rowcol) if (!(localOrUndefined(locals, target) is OpaValue.ValueUndefined)) return@run RegoBlock.INTERRUPTED __INSERT_NEWLINE__ locals[target] = localOrUndefined(locals, source)
@@ -85,10 +83,8 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
     } __INSERT_NEWLINE__ \
   }
 
-#if 0
-#define MakeArrayStmt(capacity, target, rowcol) target = {t:'array', v: []};
-#endif
-
+// TODO(dkorolev): Initialize with capacity?
+#define MakeArrayStmt(capacity, target, rowcol) locals[target] = OpaValue.ValueArray(arrayListOf())
 #define MakeNullStmt(target, rowcol) locals[target] = OpaValue.ValueNull
 
 #define MakeNumberIntStmt(number_value, target, rowcol) locals[target] = OpaValue.ValueInt(number_value)
@@ -123,13 +119,14 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, OpaValue
 #define ResultSetAddStmt(value, rowcol) result.add(localOrUndefined(locals, value))
 #define ReturnLocalStmt(source, rowcol) // NOTE(dkorolev) Unneeded, as we have the index to return.
 
-#if 0
-#define ScanStmtBegin(source, key, value, rowcol) opa_scan(source, locals, key, value, () => {
-#define ScanStmtEnd() });
-#define SetAddStmt(value, set, rowcol) if (!(value.t in set.v)) { set.v[value.t] = new Set(); } set.v[value.t].add(value.v);
-// TODO(dkorolev): `WithStmt`.
+#define ScanStmtBegin(source, key, value, rowcol) opaScan(locals, localOrUndefined(locals, source), key, value, inner = { __INSERT_NEWLINE__ run {
+#define ScanStmtEnd() RegoBlock.COMPLETED __INSERT_NEWLINE__ } __INSERT_NEWLINE__ })
 
+#if 0
+#define SetAddStmt(value, set, rowcol) if (!(value.t in set.v)) { set.v[value.t] = new Set(); } set.v[value.t].add(value.v);
 #endif
+
+// TODO(dkorolev): `WithStmt`.
 
 #define Local(a) a
 #define OperandLocal(a) a
@@ -153,7 +150,7 @@ fun __KOTLIN_CLASS_NAME__Plan##plan_index(opaInput: OpaValue, opaData: OpaValue)
     } else if (result.size == 1) { __INSERT_NEWLINE__ \
         return result[0] __INSERT_NEWLINE__ \
     } else { __INSERT_NEWLINE__ \
-        return OpaValue.ValueArray(result.toTypedArray()) __INSERT_NEWLINE__ \
+        return OpaValue.ValueArray(result) __INSERT_NEWLINE__ \
     } __INSERT_NEWLINE__ \
 }
 
