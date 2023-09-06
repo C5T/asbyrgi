@@ -4,6 +4,8 @@
 
 package rbac
 
+kotlin_export := "RbacExamplePolicy"
+
 user_roles := {
   "alice": ["eng", "web"],
   "bob": ["hr"]  # NOTE: "hr"` without `[]` would be a good example of strong typing.

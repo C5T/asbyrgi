@@ -2,6 +2,7 @@
 *.rego.dsl
 *.rego.ir
 *.rego.js
+*.rego.kt
 *.rego.*.cpp
 
 node_modules
@@ -13,3 +14,5 @@ tests/mocha.html
 *.swp
 a.out
 core
+
+kt_test

@@ -2,6 +2,8 @@
 
 package smoke
 
+kotlin_export := "OddDivisibleByThreePolicy"
+
 default odd_divisible_by_three := false
 
 odd_divisible_by_three {

@@ -2,6 +2,8 @@
 
 package smoke
 
+kotlin_export := "ComparisonsInBlocksPolicy"
+
 default comparisons_in_blocks := false
 
 # NOTE(dkorolev): These `default`-s are evidently essential!

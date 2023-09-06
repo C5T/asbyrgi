@@ -15,6 +15,15 @@ RUN echo "acdcfcfaace76588c2c3aa6a59aebf53e5906d019058d6a963e57b02c68b755b" >opa
 RUN if ! diff opa.sha256 opa.sha256.golden ; then echo 'OPA binary SHA256 check failed.' ; exit 1 ; fi
 RUN mv opa /usr/local/bin
 
+RUN apk add gradle curl
+
+RUN curl -sSLO https://github.com/pinterest/ktlint/releases/download/0.50.0/ktlint
+RUN ls -las ktlint
+RUN mkdir -p /usr/local/bin/ && chmod a+x ktlint && mv ktlint /usr/local/bin/
+
+COPY ./kt_test_golden /kt_test
+RUN tar czvf kt_test.tar.gz kt_test
+
 COPY src /src
 
 ENTRYPOINT ["/src/docker_entrypoint.sh"]
