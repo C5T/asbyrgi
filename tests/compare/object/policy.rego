@@ -2,7 +2,7 @@
 
 package comparison
 
-kotlin_class_name := "CompareObjectPolicy"
+kotlin_export := "CompareObjectPolicy"
 
 default equals = false
 equals {

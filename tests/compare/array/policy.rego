@@ -2,7 +2,7 @@
 
 package comparison
 
-kotlin_class_name := "CompareArraysPolicy"
+kotlin_export := "CompareArraysPolicy"
 
 default equals = false
 equals {

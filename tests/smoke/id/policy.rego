@@ -2,6 +2,6 @@
 
 package smoke
 
-kotlin_class_name := "IdPolicy"
+kotlin_export := "IdPolicy"
 
 id := input.x

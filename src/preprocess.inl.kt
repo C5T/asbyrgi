@@ -3,13 +3,13 @@
 // TODO(dkorolev): Complete the transformation; this only passes the `tests/smoke/sum/policy.rego` test.
 
 #define BeginOPADSL() \
-class __KOTLIN_CLASS_NAME__Statics { __INSERT_NEWLINE__ \
+class __KOTLIN_EXPORT_NAME__Statics { __INSERT_NEWLINE__ \
     data class FunctionSignature(val name: String, val argIndex: Array<Int>, val retvalIndex: Int) __INSERT_NEWLINE__ \
     companion object {
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
-    fun __KOTLIN_CLASS_NAME__(authzInput: AuthzValue, authzData: AuthzValue = AuthzValue.UNDEFINED): AuthzValue { __INSERT_NEWLINE__ \
-    return __KOTLIN_CLASS_NAME__Plan0(authzInput, authzData) __INSERT_NEWLINE__ \
+    fun __KOTLIN_EXPORT_NAME__(authzInput: AuthzValue, authzData: AuthzValue = AuthzValue.UNDEFINED): AuthzValue { __INSERT_NEWLINE__ \
+    return __KOTLIN_EXPORT_NAME__Plan0(authzInput, authzData) __INSERT_NEWLINE__ \
   }
 
 #define BeginStaticStrings() val STATIC_STRINGS: Array<String> = arrayOf(
@@ -28,9 +28,9 @@ class __KOTLIN_CLASS_NAME__Statics { __INSERT_NEWLINE__ \
 
 
 #define BeginFunction(function_index, function_name) \
-fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzValue>): AuthzValue { __INSERT_NEWLINE__ \
-    val functionArgumentIndexes = __KOTLIN_CLASS_NAME__Statics.FUNCTION_SIGNATURES[function_index].argIndex __INSERT_NEWLINE__ \
-    val functionReturnValueIndex = __KOTLIN_CLASS_NAME__Statics.FUNCTION_SIGNATURES[function_index].retvalIndex __INSERT_NEWLINE__ \
+fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzValue>): AuthzValue { __INSERT_NEWLINE__ \
+    val functionArgumentIndexes = __KOTLIN_EXPORT_NAME__Statics.FUNCTION_SIGNATURES[function_index].argIndex __INSERT_NEWLINE__ \
+    val functionReturnValueIndex = __KOTLIN_EXPORT_NAME__Statics.FUNCTION_SIGNATURES[function_index].retvalIndex __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, AuthzValue> = mutableMapOf() __INSERT_NEWLINE__ \
     for (i in functionArgumentIndexes.indices) { __INSERT_NEWLINE__ \
         locals[functionArgumentIndexes[i]] = regoVal(args, i) __INSERT_NEWLINE__ \
@@ -58,7 +58,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 #define CallBuiltinStmtEnd(func, target) RegoBuiltins.func(callArgs) __INSERT_NEWLINE__ }
 
 #define CallUserStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, AuthzValue> = mutableMapOf()
-#define CallUserStmtEnd(func, target) __KOTLIN_CLASS_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
+#define CallUserStmtEnd(func, target) __KOTLIN_EXPORT_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
 
 #define NotStmtBegin(rowcol) if (run {
 #define NotStmtEnd() RegoBlockResult.COMPLETED } == RegoBlockResult.COMPLETED) return@run RegoBlockResult.INTERRUPTED
@@ -90,7 +90,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 #define MakeNumberIntStmt(number_value, target, rowcol) locals[target] = AuthzValue.INT(number_value)
 
 // TODO(dkorolev): Int? Maybe `Double`?
-#define MakeNumberRefStmt(index, target, rowcol) locals[target] = AuthzValue.INT(__KOTLIN_CLASS_NAME__Statics.STATIC_STRINGS[index].toInt())
+#define MakeNumberRefStmt(index, target, rowcol) locals[target] = AuthzValue.INT(__KOTLIN_EXPORT_NAME__Statics.STATIC_STRINGS[index].toInt())
 #define MakeObjectStmt(target, rowcol) locals[target] = AuthzValue.OBJECT(mutableMapOf())
 
 #define MakeSetStmt(target, rowcol) locals[target] = AuthzValue.SET(mutableSetOf())
@@ -134,7 +134,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 #define StringConstantIndex(a) a
 
 #define BeginPlan(plan_index, plan_name) \
-fun __KOTLIN_CLASS_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: AuthzValue): AuthzValue { __INSERT_NEWLINE__ \
+fun __KOTLIN_EXPORT_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: AuthzValue): AuthzValue { __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, AuthzValue> = mutableMapOf() __INSERT_NEWLINE__ \
     val result: ArrayList<AuthzValue> = arrayListOf() __INSERT_NEWLINE__ \
     locals[0] = authzInput __INSERT_NEWLINE__ \

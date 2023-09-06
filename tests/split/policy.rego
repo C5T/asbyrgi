@@ -2,6 +2,6 @@
 
 package smoke
 
-kotlin_class_name := "SplitStringPolicy"
+kotlin_export := "SplitStringPolicy"
 
 test_split := split(input.s, ",")[input.i]

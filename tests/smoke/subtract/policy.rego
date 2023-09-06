@@ -2,6 +2,6 @@
 
 package smoke
 
-kotlin_class_name := "SubtractPolicy"
+kotlin_export := "SubtractPolicy"
 
 subtract := input.a - input.b

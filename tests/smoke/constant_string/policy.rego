@@ -2,6 +2,6 @@
 
 package smoke
 
-kotlin_class_name := "ConstantStringPolicy"
+kotlin_export := "ConstantStringPolicy"
 
 constant_string := "foo"

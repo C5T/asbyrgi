@@ -2,7 +2,7 @@
 
 package smoke
 
-kotlin_class_name := "OddDivisibleByThreePolicy"
+kotlin_export := "OddDivisibleByThreePolicy"
 
 default odd_divisible_by_three := false
 

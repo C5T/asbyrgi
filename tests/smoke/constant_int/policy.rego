@@ -2,6 +2,6 @@
 
 package smoke
 
-kotlin_class_name := "ConstantIntPolicy"
+kotlin_export := "ConstantIntPolicy"
 
 constant_int := 42

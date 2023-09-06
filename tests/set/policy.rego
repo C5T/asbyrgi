@@ -4,7 +4,7 @@ package smoke
 
 import future.keywords.in
 
-kotlin_class_name := "SmokeSetPolicy"
+kotlin_export := "SmokeSetPolicy"
 
 default set := false
 set {

@@ -2,7 +2,7 @@
 
 package the
 
-kotlin_class_name := "IndirectCallP1Policy"
+kotlin_export := "IndirectCallP1Policy"
 
 f("add") = x { x := input.a + input.b }
 f("mul") = x { x := input.a * input.b }

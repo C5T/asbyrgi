@@ -2,6 +2,6 @@
 
 package smoke
 
-kotlin_class_name := "SmokeSumPolicy"
+kotlin_export := "SmokeSumPolicy"
 
 sum := input.a + input.b

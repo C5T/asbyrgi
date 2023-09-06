@@ -4,7 +4,7 @@
 
 package rbac
 
-kotlin_class_name := "RbacExamplePolicy"
+kotlin_export := "RbacExamplePolicy"
 
 user_roles := {
   "alice": ["eng", "web"],

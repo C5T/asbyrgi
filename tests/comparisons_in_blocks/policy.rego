@@ -2,7 +2,7 @@
 
 package smoke
 
-kotlin_class_name := "ComparisonsInBlocksPolicy"
+kotlin_export := "ComparisonsInBlocksPolicy"
 
 default comparisons_in_blocks := false
 

@@ -2,7 +2,7 @@
 
 package the
 
-kotlin_class_name := "IndirectCallP2Policy"
+kotlin_export := "IndirectCallP2Policy"
 
 default answer = null
 answer = input.a + input.b { input.f == "add" }

@@ -2,7 +2,7 @@
 
 package comparison
 
-kotlin_class_name := "CompareStringPolicy"
+kotlin_export := "CompareStringPolicy"
 
 default equals = false
 equals {

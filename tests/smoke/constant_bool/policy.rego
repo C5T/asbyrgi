@@ -2,6 +2,6 @@
 
 package smoke
 
-kotlin_class_name := "ConstantBoolPolicy"
+kotlin_export := "ConstantBoolPolicy"
 
 constant_bool := true
