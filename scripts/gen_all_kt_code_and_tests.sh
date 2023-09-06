@@ -17,6 +17,10 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
     ./scripts/gen_all_kt.sh.helper $(docker build -q .) $REGO_TEST_CASE
     echo CHECKPOINT 3
     ls -lasR tests
+    echo CHECKPOINT 4
+    echo $REGO_TEST_CASE
+    echo CHECKPOINT 5
+    cat $REGO_TEST_CASE.kt
     cp $REGO_TEST_CASE.kt kt_test/src/main/kotlin/$REGO_KT_IMPL_NAME.kt
     node tests/generate_kt_test.js "$REGO_TEST_CASE" "$(dirname "$REGO_TEST_CASE")" $REGO_KT_IMPL_NAME >kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
   else
