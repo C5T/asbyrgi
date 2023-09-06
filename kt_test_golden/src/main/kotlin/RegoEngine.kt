@@ -1,3 +1,4 @@
+import kotlin.system.exitProcess
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
@@ -53,7 +54,8 @@ fun jsonToAuthzValue(element: JsonElement): AuthzValue = when (element) {
                         AuthzValue.DOUBLE(v2)
                     } else {
                         // TODO(dkorolev): Proper error handling.
-                        println("FAIL 1")
+                        println("""JSON primitives should be bool-s, string-s, or numbers, seeing ${tmp.content}.""")
+                        exitProcess(1)
                         AuthzValue.UNDEFINED
                     }
                 }
@@ -90,13 +92,14 @@ fun regoDotStmt(input: AuthzValue, key: String): AuthzValue = when (input) {
     is AuthzValue.OBJECT -> input.fields.getOrElse(key, { AuthzValue.UNDEFINED })
     is AuthzValue.ARRAY -> {
         val i = key.toInt()
-        println("INDIRECT GET: $i")
         if (i >= 0 && i < input.elements.size) {
             input.elements[i]
         } else {
+            // TODO(dkorolev): Is this acceptable?
             AuthzValue.UNDEFINED
         }
     }
+    // TODO(dkorolev): Is this acceptable?
     else -> AuthzValue.UNDEFINED
 }
 
@@ -151,17 +154,17 @@ fun regoVal(locals: MutableMap<Int, AuthzValue>, index: Int): AuthzValue = local
 fun regoVal(unused: MutableMap<Int, AuthzValue>, value: AuthzValue.BOOLEAN): AuthzValue = value
 fun regoVal(unused: MutableMap<Int, AuthzValue>, value: String): AuthzValue = AuthzValue.STRING(value)
 
-// TODO(dkorolev): Check whether these can be numeric indexes; will need a special type then, maybe for array accessors.
+// TODO(dkorolev): A special type for indexes, as indexing arrays as string is sort of dated in 2023.
 fun regoStringWrapper(unused: MutableMap<Int, AuthzValue>, s: String): String = s
 fun regoStringWrapper(locals: MutableMap<Int, AuthzValue>, i: Int): String {
     val maybeStringValue = locals[i]
     if (maybeStringValue is AuthzValue.STRING) {
         return maybeStringValue.string
     } else if (maybeStringValue is AuthzValue.INT) {
-        println("WARN 1")
         return maybeStringValue.number.toString()
     } else {
-        println("FAIL 2")
+        println("We are not really accepting non-string and non-int indexes.")
+        exitProcess(1)
         return ""
     }
 }
