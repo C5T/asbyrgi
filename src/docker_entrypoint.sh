@@ -137,7 +137,7 @@ elif [ "$1" == "kt_test.tar.gz" ] ; then
   # Can also `docker run ${ASBYRGI_CONTAINER_ID} kt_test.tar.bz2 | tar xzO kt_test/src/main/kotlin/RegoEngine.kt`.
 elif [ "$1" == "compose_kt_test" ] ; then
   if [ $# == 2 ] ; then
-    node tests/compose_kt_test.js $2
+    nodejs src/compose_kt_test.js $2
   else
     echo 'The `compose_kt_test` command needs one argument, some `KotlinFunctionName`, and then'
     echo 'it converts the stream of tab-separated "INPUT OUTPUT" fields into a ready-to-run Kotlin test.'
