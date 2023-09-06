@@ -1,0 +1,17 @@
+name: TMP run Kotlin tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tmp-run-kotlin-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+      - name: Build the container
+        run:  docker build .
+      - name: Generate Kotlin code and tests
+        run: scripts/gen_all_kt_code_and_tests.sh
+      - name: Run Kotlin tests
+        run: docker run -v "$PWD/kt_test":/kt_test $(docker build -q .) ktRunTests

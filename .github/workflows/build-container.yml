@@ -1,0 +1,28 @@
+name: Build the Asbyrgi container
+
+on:
+  workflow_dispatch:
+
+env:
+  GHCR_USERNAME: ${{ github.actor }}
+  GHCR_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+  GIT_COMMIT: ${{ github.sha }}  # NOTE(dkorolev): This will not do what it should for PR-based action triggers!
+
+jobs:
+  build-asbyrgi-container:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Clone
+        uses: actions/checkout@v3
+      - name: Build the container
+        run: |
+          docker build -t "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest" .
+      - name: Login to GHCR
+        run: echo "${GHCR_PASSWORD}" | docker login ghcr.io --username "${GHCR_USERNAME}" --password-stdin
+      - name: Push to GHCR
+        run: |
+          docker push "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest"
+          docker tag "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest" "ghcr.io/${GHCR_USERNAME}/asbyrgi:${GIT_COMMIT:0:6}"
+          docker push "ghcr.io/${GHCR_USERNAME}/asbyrgi:${GIT_COMMIT:0:6}"

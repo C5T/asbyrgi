@@ -14,3 +14,5 @@ tests/mocha.html
 *.swp
 a.out
 core
+
+kt_test
