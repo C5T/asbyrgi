@@ -20,7 +20,16 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
     if [[ "$HEADER" =~ \#!TEST ]] ; then
       read -r UNUNSED_TEST PACKAGE RULE <<< "$HEADER"
 
+      echo "CHECKPOINT 1: $(wc -l "$(dirname "$REGO_TEST_CASE")/tests.json")"
+
       while IFS= read -r line; do
+        echo "CHECKPOINT 2: $line"
+        echo "$line" >$TMPFILE
+        docker run -i $CONTAINER_ID eval --data "$REGO_TEST_CASE" --input $TMPFILE data.$PACKAGE.$RULE
+      done < "$(dirname "$REGO_TEST_CASE")/tests.json"
+
+      while IFS= read -r line; do
+        echo "CHECKPOINT 3: $line"
         echo "$line" >$TMPFILE
         echo -en "$line\t"
         docker run -i $CONTAINER_ID eval --data "$REGO_TEST_CASE" --input $TMPFILE data.$PACKAGE.$RULE \
