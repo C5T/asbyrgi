@@ -8,8 +8,8 @@ class __KOTLIN_CLASS_NAME__Statics { __INSERT_NEWLINE__ \
     companion object {
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
-    fun __KOTLIN_CLASS_NAME__(opaInput: AuthzValue, opaData: AuthzValue = AuthzValue.UNDEFINED): AuthzValue { __INSERT_NEWLINE__ \
-    return __KOTLIN_CLASS_NAME__Plan0(opaInput, opaData) __INSERT_NEWLINE__ \
+    fun __KOTLIN_CLASS_NAME__(authzInput: AuthzValue, authzData: AuthzValue = AuthzValue.UNDEFINED): AuthzValue { __INSERT_NEWLINE__ \
+    return __KOTLIN_CLASS_NAME__Plan0(authzInput, authzData) __INSERT_NEWLINE__ \
   }
 
 #define BeginStaticStrings() val STATIC_STRINGS: Array<String> = arrayOf(
@@ -33,42 +33,42 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
     val functionReturnValueIndex = __KOTLIN_CLASS_NAME__Statics.FUNCTION_SIGNATURES[function_index].retvalIndex __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, AuthzValue> = mutableMapOf() __INSERT_NEWLINE__ \
     for (i in functionArgumentIndexes.indices) { __INSERT_NEWLINE__ \
-        locals[functionArgumentIndexes[i]] = localOrUndefined(args, i) __INSERT_NEWLINE__ \
+        locals[functionArgumentIndexes[i]] = regoVal(args, i) __INSERT_NEWLINE__ \
     }   
 
 
-#define EndFunction(function_index, function_name) return localOrUndefined(locals, functionReturnValueIndex) __INSERT_NEWLINE__ } __INSERT_NEWLINE__
+#define EndFunction(function_index, function_name) return regoVal(locals, functionReturnValueIndex) __INSERT_NEWLINE__ } __INSERT_NEWLINE__
 
 
 #define BeginBlock() run {
-#define EndBlock() RegoBlock.COMPLETED __INSERT_NEWLINE__ }
+#define EndBlock() RegoBlockResult.COMPLETED __INSERT_NEWLINE__ }
 
-#define ArrayAppendStmt(array, value, rowcol) opaAppendToArray(localOrUndefined(locals, array), localOrUndefined(locals, value))
+#define ArrayAppendStmt(array, value, rowcol) regoArrayAppendStmt(regoVal(locals, array), regoVal(locals, value))
 
 #define AssignIntStmt(value, target, rowcol) locals[target] = AuthzValue.INT(value)
-#define AssignVarOnceStmt(source, target, rowcol) if (!(localOrUndefined(locals, target) is AuthzValue.UNDEFINED)) return@run RegoBlock.INTERRUPTED __INSERT_NEWLINE__ locals[target] = localOrUndefined(locals, source)
-#define AssignVarStmt(source, target, rowcol) locals[target] = localOrUndefined(locals, source)
+#define AssignVarOnceStmt(source, target, rowcol) if (!(regoVal(locals, target) is AuthzValue.UNDEFINED)) return@run RegoBlockResult.INTERRUPTED __INSERT_NEWLINE__ locals[target] = regoVal(locals, source)
+#define AssignVarStmt(source, target, rowcol) locals[target] = regoVal(locals, source)
 
 // TODO(dkorolev): `BreakStmt`.
 // TODO(dkorolev): `CallDynamicStmt`.
 
-#define CallStmtPassArg(arg_index, arg_value) callArgs[arg_index] = localOrUndefined(locals, arg_value)
+#define CallStmtPassArg(arg_index, arg_value) callArgs[arg_index] = regoVal(locals, arg_value)
 
 #define CallBuiltinStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, AuthzValue> = mutableMapOf()
-#define CallBuiltinStmtEnd(func, target) OpaBuiltins.func(callArgs) __INSERT_NEWLINE__ }
+#define CallBuiltinStmtEnd(func, target) RegoBuiltins.func(callArgs) __INSERT_NEWLINE__ }
 
 #define CallUserStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, AuthzValue> = mutableMapOf()
 #define CallUserStmtEnd(func, target) __KOTLIN_CLASS_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
 
 #define NotStmtBegin(rowcol) if (run {
-#define NotStmtEnd() RegoBlock.COMPLETED } == RegoBlock.COMPLETED) return@run RegoBlock.INTERRUPTED
+#define NotStmtEnd() RegoBlockResult.COMPLETED } == RegoBlockResult.COMPLETED) return@run RegoBlockResult.INTERRUPTED
 
-#define DotStmt(source, key, target, rowcol) locals[target] = irGetByKey(localOrUndefined(locals, source), irStringPossiblyFromLocal(locals, key))
-#define EqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) != localOrUndefined(locals, b)) return@run RegoBlock.INTERRUPTED
-#define IsArrayStmt(array, rowcol) if (!(localOrUndefined(locals, array) is AuthzValue.ARRAY)) return@run RegoBlock.INTERRUPTED
-#define IsDefinedStmt(source, rowcol) if (localOrUndefined(locals, source) is AuthzValue.UNDEFINED) return@run RegoBlock.INTERRUPTED
-#define IsObjectStmt(object, rowcol) if (!(localOrUndefined(locals, object) is AuthzValue.OBJECT)) return@run RegoBlock.INTERRUPTED
-#define IsUndefinedStmt(source, rowcol) if (!(localOrUndefined(locals, source) is AuthzValue.UNDEFINED)) return@run RegoBlock.INTERRUPTED
+#define DotStmt(source, key, target, rowcol) locals[target] = regoDotStmt(regoVal(locals, source), regoStringWrapper(locals, key))
+#define EqualStmt(a, b, rowcol) if (regoVal(locals, a) != regoVal(locals, b)) return@run RegoBlockResult.INTERRUPTED
+#define IsArrayStmt(array, rowcol) if (!(regoVal(locals, array) is AuthzValue.ARRAY)) return@run RegoBlockResult.INTERRUPTED
+#define IsDefinedStmt(source, rowcol) if (regoVal(locals, source) is AuthzValue.UNDEFINED) return@run RegoBlockResult.INTERRUPTED
+#define IsObjectStmt(object, rowcol) if (!(regoVal(locals, object) is AuthzValue.OBJECT)) return@run RegoBlockResult.INTERRUPTED
+#define IsUndefinedStmt(source, rowcol) if (!(regoVal(locals, source) is AuthzValue.UNDEFINED)) return@run RegoBlockResult.INTERRUPTED
 
 // TODO(dkorolev): Double-check that `LenStmt` is for both arrays and object. Also sets, right?
 #define LenStmt(source, target, rowcol) \
@@ -97,7 +97,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 
 // NOTE(dkorolev): Skipping `NopStmt`.
 
-#define NotEqualStmt(a, b, rowcol) if (localOrUndefined(locals, a) == localOrUndefined(locals, b)) return@run RegoBlock.INTERRUPTED
+#define NotEqualStmt(a, b, rowcol) if (regoVal(locals, a) == regoVal(locals, b)) return@run RegoBlockResult.INTERRUPTED
 
 #if 0
 #define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
@@ -106,7 +106,7 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
     run { __INSERT_NEWLINE__ \
         val o = locals[object] __INSERT_NEWLINE__ \
         if (o is AuthzValue.OBJECT) { __INSERT_NEWLINE__ \
-            o.fields.put(key, localOrUndefined(locals, value)) __INSERT_NEWLINE__ \
+            o.fields.put(key, regoVal(locals, value)) __INSERT_NEWLINE__ \
         } __INSERT_NEWLINE__ \
     }
 #if 0
@@ -115,13 +115,13 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 
 #define ResetLocalStmt(target, rowcol) locals[target] = AuthzValue.UNDEFINED
 
-#define ResultSetAddStmt(value, rowcol) result.add(localOrUndefined(locals, value))
+#define ResultSetAddStmt(value, rowcol) result.add(regoVal(locals, value))
 #define ReturnLocalStmt(source, rowcol) // NOTE(dkorolev) Unneeded, as we have the index to return.
 
-#define ScanStmtBegin(source, key, value, rowcol) opaScan(locals, localOrUndefined(locals, source), key, value, inner = { __INSERT_NEWLINE__ run {
-#define ScanStmtEnd() RegoBlock.COMPLETED __INSERT_NEWLINE__ } __INSERT_NEWLINE__ })
+#define ScanStmtBegin(source, key, value, rowcol) regoScanStmt(locals, regoVal(locals, source), key, value, inner = { __INSERT_NEWLINE__ run {
+#define ScanStmtEnd() RegoBlockResult.COMPLETED __INSERT_NEWLINE__ } __INSERT_NEWLINE__ })
 
-#define SetAddStmt(value, set, rowcol) opaAddToSet(localOrUndefined(locals, set), localOrUndefined(locals, value))
+#define SetAddStmt(value, set, rowcol) regoSetAddStmt(regoVal(locals, set), regoVal(locals, value))
 
 // TODO(dkorolev): `WithStmt`.
 
@@ -134,11 +134,11 @@ fun __KOTLIN_CLASS_NAME__Function##function_index(args: MutableMap<Int, AuthzVal
 #define StringConstantIndex(a) a
 
 #define BeginPlan(plan_index, plan_name) \
-fun __KOTLIN_CLASS_NAME__Plan##plan_index(opaInput: AuthzValue, opaData: AuthzValue): AuthzValue { __INSERT_NEWLINE__ \
+fun __KOTLIN_CLASS_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: AuthzValue): AuthzValue { __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, AuthzValue> = mutableMapOf() __INSERT_NEWLINE__ \
     val result: ArrayList<AuthzValue> = arrayListOf() __INSERT_NEWLINE__ \
-    locals[0] = opaInput __INSERT_NEWLINE__ \
-    locals[1] = opaData
+    locals[0] = authzInput __INSERT_NEWLINE__ \
+    locals[1] = authzData
 
 
 #define EndPlan(plan_index, plan_name)  \

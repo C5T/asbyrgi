@@ -27,9 +27,9 @@ rl.on('line', (line) => {
     console.log(`fun run${kotlin_class_name}TestCase(goldenJson: String, inputJson: String) {`);
     console.log('    assertEquals(');
     console.log('        goldenJson,');
-    console.log('        opaValueToJson(');
+    console.log('        authzValueToJson(');
     console.log(`            ${kotlin_class_name}(`);
-    console.log('                jsonToOpaValue(Json.parseToJsonElement(inputJson)),');
+    console.log('                jsonToAuthzValue(Json.parseToJsonElement(inputJson)),');
     console.log('                AuthzValue.UNDEFINED,');
     console.log('            ),');
     console.log('        ).toString(),');
