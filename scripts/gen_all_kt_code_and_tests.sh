@@ -21,7 +21,7 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
 
       while IFS= read -r line; do
         echo -en "$line\t"
-        opa eval --data "$REGO_TEST_CASE" --input <(echo "$line") data.$PACKAGE.$RULE \
+        docker run -i $CONTAINER_ID eval --data "$REGO_TEST_CASE" --input <(echo "$line") data.$PACKAGE.$RULE \
         | jq .result[0].expressions[0].value
       done < "$(dirname "$REGO_TEST_CASE")/tests.json" | tr - - \
       | node tests/compose_kt_test.js $REGO_KT_IMPL_NAME \
