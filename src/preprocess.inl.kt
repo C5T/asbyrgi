@@ -1,11 +1,10 @@
 // This "C" preprocessor file contains the definitions that convert the DSL of an OPA IR policy into valid Kotlin code.
 
-// TODO(dkorolev): Complete the transformation; this only passes the `tests/smoke/sum/policy.rego` test.
-
 #define BeginOPADSL() \
 class __KOTLIN_EXPORT_NAME__Statics { __INSERT_NEWLINE__ \
     data class FunctionSignature(val name: String, val argIndex: Array<Int>, val retvalIndex: Int) __INSERT_NEWLINE__ \
     companion object {
+
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
     fun __KOTLIN_EXPORT_NAME__(authzInput: AuthzValue, authzData: AuthzValue = AuthzValue.UNDEFINED): AuthzValue { __INSERT_NEWLINE__ \
@@ -25,7 +24,6 @@ class __KOTLIN_EXPORT_NAME__Statics { __INSERT_NEWLINE__ \
 #define EndFunctionArguments(function_index) )
 #define FunctionArgument(arg_index, local_index) local_index,
 #define FunctionReturnValue(function_index, local_return_index) ,local_return_index
-
 
 #define BeginFunction(function_index, function_name) \
 fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzValue>): AuthzValue { __INSERT_NEWLINE__ \
@@ -99,9 +97,9 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 
 #define NotEqualStmt(a, b, rowcol) if (regoVal(locals, a) == regoVal(locals, b)) return@run RegoBlockResult.INTERRUPTED
 
-#if 0
-#define ObjectInsertOnceStmt(key, value, object, rowcol) object.v[key] = wrap_for_assignment(value);  // TODO(dkorolev): Checks!
-#endif
+// TODO(dkorolev): Implement & test this for Kotlin.
+// #define ObjectInsertOnceStmt(key, value, object, rowcol) THE_OLD_JS_CODE_IS object.v[key] = wrap_for_assignment(value);
+
 #define ObjectInsertStmt(key, value, object, rowcol) \
     run { __INSERT_NEWLINE__ \
         val o = locals[object] __INSERT_NEWLINE__ \
@@ -109,9 +107,9 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
             o.fields.put(key, regoVal(locals, value)) __INSERT_NEWLINE__ \
         } __INSERT_NEWLINE__ \
     }
-#if 0
-#define ObjectMergeStmt(a, b, target, rowcol) target = { FIXME_MERGED: [a, b] };  // TODO(dkorolev): Implement this.
-#endif
+
+// TODO(dkorolev): Implement & test this for Kotlin.
+// #define ObjectMergeStmt(a, b, target, rowcol) THE_OLD_JS_CODE_IS target = { FIXME_MERGED: [a, b] };
 
 #define ResetLocalStmt(target, rowcol) locals[target] = AuthzValue.UNDEFINED
 
@@ -140,7 +138,6 @@ fun __KOTLIN_EXPORT_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: Au
     locals[0] = authzInput __INSERT_NEWLINE__ \
     locals[1] = authzData
 
-
 #define EndPlan(plan_index, plan_name)  \
     if (result.size == 0) { __INSERT_NEWLINE__ \
         return AuthzValue.UNDEFINED __INSERT_NEWLINE__ \
@@ -150,4 +147,3 @@ fun __KOTLIN_EXPORT_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: Au
         return AuthzValue.ARRAY(result) __INSERT_NEWLINE__ \
     } __INSERT_NEWLINE__ \
 }
-
