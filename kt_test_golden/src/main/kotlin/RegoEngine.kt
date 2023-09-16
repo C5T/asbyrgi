@@ -104,21 +104,33 @@ fun regoDotStmt(input: AuthzValue, key: String): AuthzValue = when (input) {
             input.elements[i]
         } else {
             // TODO(dkorolev): Is this acceptable?
+            println("""DotStmt on an array with an out-of-bounds index.""")
+            exitProcess(1)
             AuthzValue.UNDEFINED
         }
     }
-    // TODO(dkorolev): Is this acceptable?
-    else -> AuthzValue.UNDEFINED
+    else -> {
+        // TODO(dkorolev): Is this acceptable?
+        println("""DotStmt on an array with an out-of-bounds index.""")
+        exitProcess(1)
+        AuthzValue.UNDEFINED
+    }
 }
 
 fun regoArrayAppendStmt(a: AuthzValue, v: AuthzValue) = when (a) {
     is AuthzValue.ARRAY -> a.elements.add(v)
-    else -> Unit // TODO(dkorolev): Error!
+    else -> {
+        println("""ArrayAppendStmt on a non-array.""")
+        exitProcess(1)
+    }
 }
 
 fun regoSetAddStmt(a: AuthzValue, v: AuthzValue) = when (a) {
     is AuthzValue.SET -> a.elems.add(v)
-    else -> Unit // TODO(dkorolev): Error!
+    else -> {
+        println("""SetAddStmt on a non-set.""")
+        exitProcess(1)
+    }
 }
 
 fun regoScanStmt(locals: MutableMap<Int, AuthzValue>, x: AuthzValue, k: Int, v: Int, inner: () -> RegoBlockResult) {
@@ -146,11 +158,12 @@ fun regoScanStmt(locals: MutableMap<Int, AuthzValue>, x: AuthzValue, k: Int, v: 
         }
         is AuthzValue.SET -> {
             // TODO(dkorolev): Implement this. Although not sure. Just make it an error for now.
-            println("OPASCAN SET")
+            println("""ScanStmt on a Set not implemented (yet; should be straightforward).""")
+            exitProcess(1)
         }
         else -> {
-            // TODO(dkorolev): Exception, or something more major here.
-            println("MASSIVE FAILURE!")
+            println("""ScanStmt on a something that is not an Array/Object/Set, should not happen.""")
+            exitProcess(1)
         }
     }
 }
@@ -187,6 +200,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.INT(a.number + b.number)
             } else {
+                println("""`plus` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -198,6 +213,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.BOOLEAN(a.number < b.number)
             } else {
+                println("""`<` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -209,6 +226,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.BOOLEAN(a.number > b.number)
             } else {
+                println("""`>` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -220,6 +239,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.BOOLEAN(a.number <= b.number)
             } else {
+                println("""`<=` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -231,6 +252,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.BOOLEAN(a.number >= b.number)
             } else {
+                println("""`>=` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -242,6 +265,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.INT(a.number - b.number)
             } else {
+                println("""`minus` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -253,6 +278,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.INT(a.number * b.number)
             } else {
+                println("""`mul` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -264,9 +291,13 @@ class RegoBuiltins {
                 if (b.number > 0) {
                     return AuthzValue.INT(a.number % b.number)
                 } else {
+                    println("""`rem` on a non-positive divider, not allowed for now.""")
+                    exitProcess(1)
                     return AuthzValue.UNDEFINED
                 }
             } else {
+                println("""`rem` on non-Ints, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -279,6 +310,8 @@ class RegoBuiltins {
                 a.string.split(b.string).forEach { r.add(AuthzValue.STRING(it)) }
                 return AuthzValue.ARRAY(r)
             } else {
+                println("""`split` on non-Strings, not allowed for now.""")
+                exitProcess(1)
                 return AuthzValue.UNDEFINED
             }
         }
@@ -297,9 +330,13 @@ class RegoBuiltins {
                         }
                         return AuthzValue.ARRAY(r)
                     } else {
+                        println("""`number.range` on a malformed range, not allowed for now.""")
+                        exitProcess(1)
                         return AuthzValue.UNDEFINED
                     }
                 } else {
+                    println("""`number.range` on non-Ints, not allowed for now.""")
+                    exitProcess(1)
                     return AuthzValue.UNDEFINED
                 }
             }
@@ -314,7 +351,8 @@ class RegoBuiltins {
                 if (b is AuthzValue.SET) {
                     return AuthzValue.BOOLEAN(b.elems.contains(a))
                 } else {
-                    // TODO(dkorolev): This should be a proper error!
+                    println("""`internal.member_2`, which is effectively `setContains()` on a non-Set.""")
+                    exitProcess(1)
                     return AuthzValue.UNDEFINED
                 }
             }
