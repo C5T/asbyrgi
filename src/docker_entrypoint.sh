@@ -88,9 +88,6 @@ elif [ "$1" == "evalterm" ] ; then
     exit 1
   fi
 elif [ "$1" == "rego2kt" ] ; then
-  # TODO(dkorolev): Generate the proper Kotlin project, and return the archive. With the shared code too.
-  # TODO(dkorolev): Run `ktlint` from within the `Asbyrgi` container maybe?
-  # TODO(dkorolev): Don't `grep`, use OPA-native ways to add metadata into `.rego` files!
   if [ $# == 4 ] ; then
     if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | gunzip | tar x -O plan.json >/tmp/ir.json 2>/dev/null ; then
       echo 'OPA run failed.' >/dev/stderr
