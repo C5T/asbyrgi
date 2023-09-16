@@ -6,7 +6,7 @@ on:
   push:
 
 jobs:
-  tmp-run-kotlin-tests:
+  run-tests-kotlin:
     runs-on: ubuntu-latest
     steps:
       - name: Clone

@@ -3,7 +3,7 @@ name: JavaScript Transpilation Tests
 on: [push]
 
 jobs:
-  tests:
+  run-tests-js:
     runs-on: ubuntu-latest
     steps:
       - name: 'Check out Asbyrgi'
@@ -29,7 +29,7 @@ jobs:
         run: |
           export ASBYRGI_CONTAINER_ID=${{ steps.asbyrgi_container.outputs.ASBYRGI_CONTAINER_ID }}
           (cd asbyrgi; ./scripts/gen_all_js.sh)
-      - name: '[Re-]Generate all the tests (TODO(dkorolev): Fixme.)'
+      - name: 'Generate all the tests.'
         run: |
           export ASBYRGI_CONTAINER_ID=${{ steps.asbyrgi_container.outputs.ASBYRGI_CONTAINER_ID }}
           (cd asbyrgi; ./scripts/gen_all_js_tests.sh)
