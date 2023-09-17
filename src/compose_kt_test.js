@@ -42,9 +42,9 @@ rl.on('line', (line) => {
     console.log('');
   }
   console.log('    @Test');
-  console.log(`    @DisplayName("""${fields[0]}""")`);
+  console.log(`    @DisplayName("""${fields[0]} == ${fields[1]}""")`);
   console.log(`    fun test${kotlin_export}${++i}() = ` +
-              `run${kotlin_export}TestCase("""{"result":${fields[1]}}""", ` +
+              `run${kotlin_export}TestCase("""${fields[1]}""", ` +
               `"""${fields[0]}""")`);
 });
 

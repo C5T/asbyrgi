@@ -33,24 +33,32 @@ class AuthzResult {
     private var allResultsSet: MutableSet<AuthzValue> = mutableSetOf()
     private var allResultsList: ArrayList<AuthzValue> = arrayListOf()
 
-    fun addToResultSet(result: AuthzValue) {
-        if (result is AuthzValue.UNDEFINED) {
-            println("""Attempted to add an `undefined` value into the result set. Treating as an error for now.""")
+    fun addToResultSet(resultObject: AuthzValue) {
+        // NOTE(dkorolev): We know that what's added to the result set is a `{"result":...}` object.
+        if (resultObject is AuthzValue.OBJECT) {
+            val result = resultObject.fields["result"]
+            if (result != null) {
+                if (!hasSomeResult) {
+                    hasSomeResult = true
+                    hasUniqueResult = true
+                    someResult = result
+                    allResultsSet.add(result)
+                    allResultsList.add(result)
+                } else if (!hasUniqueResult || result != someResult) {
+                    hasUniqueResult = false
+                    allResultsSet.add(result)
+                    allResultsList.add(result)
+                } else if (!allResultsSet.contains(result)) {
+                    allResultsSet.add(result)
+                    allResultsList.add(result)
+                }
+            } else {
+               println("""The key `result` must be part of the object that is being added into the results set.""")
+               exitProcess(1)
+            }
+        } else {
+            println("""Attempted to add a non-object value into the result set. Treating as an error for now.""")
             exitProcess(1)
-        }
-        if (!hasSomeResult) {
-            hasSomeResult = true
-            hasUniqueResult = true
-            someResult = result
-            allResultsSet.add(result)
-            allResultsList.add(result)
-        } else if (!hasUniqueResult || result != someResult) {
-            hasUniqueResult = false
-            allResultsSet.add(result)
-            allResultsList.add(result)
-        } else if (!allResultsSet.contains(result)) {
-            allResultsSet.add(result)
-            allResultsList.add(result)
         }
     }
 
