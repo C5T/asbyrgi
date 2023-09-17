@@ -7,7 +7,7 @@ class __KOTLIN_EXPORT_NAME__Statics { __INSERT_NEWLINE__ \
 
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
-    fun __KOTLIN_EXPORT_NAME__(authzInput: AuthzValue, authzData: AuthzValue = AuthzValue.UNDEFINED): AuthzValue { __INSERT_NEWLINE__ \
+    fun __KOTLIN_EXPORT_NAME__(authzInput: AuthzValue, authzData: AuthzValue = AuthzValue.UNDEFINED): AuthzResult { __INSERT_NEWLINE__ \
     return __KOTLIN_EXPORT_NAME__Plan0(authzInput, authzData) __INSERT_NEWLINE__ \
   }
 
@@ -113,7 +113,7 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 
 #define ResetLocalStmt(target, rowcol) locals[target] = AuthzValue.UNDEFINED
 
-#define ResultSetAddStmt(value, rowcol) result.add(regoVal(locals, value))
+#define ResultSetAddStmt(value, rowcol) result.addToResultSet(regoVal(locals, value))
 #define ReturnLocalStmt(source, rowcol) // NOTE(dkorolev) Unneeded, as we have the index to return.
 
 #define ScanStmtBegin(source, key, value, rowcol) regoScanStmt(locals, regoVal(locals, source), key, value, inner = { __INSERT_NEWLINE__ run {
@@ -132,18 +132,12 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 #define StringConstantIndex(a) a
 
 #define BeginPlan(plan_index, plan_name) \
-fun __KOTLIN_EXPORT_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: AuthzValue): AuthzValue { __INSERT_NEWLINE__ \
+fun __KOTLIN_EXPORT_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: AuthzValue): AuthzResult { __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, AuthzValue> = mutableMapOf() __INSERT_NEWLINE__ \
-    val result: ArrayList<AuthzValue> = arrayListOf() __INSERT_NEWLINE__ \
+    val result = AuthzResult() __INSERT_NEWLINE__ \
     locals[0] = authzInput __INSERT_NEWLINE__ \
     locals[1] = authzData
 
 #define EndPlan(plan_index, plan_name)  \
-    if (result.size == 0) { __INSERT_NEWLINE__ \
-        return AuthzValue.UNDEFINED __INSERT_NEWLINE__ \
-    } else if (result.size == 1) { __INSERT_NEWLINE__ \
-        return result[0] __INSERT_NEWLINE__ \
-    } else { __INSERT_NEWLINE__ \
-        return AuthzValue.ARRAY(result) __INSERT_NEWLINE__ \
-    } __INSERT_NEWLINE__ \
+    return result __INSERT_NEWLINE__ \
 }

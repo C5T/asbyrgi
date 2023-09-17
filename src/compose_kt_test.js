@@ -27,7 +27,7 @@ rl.on('line', (line) => {
     console.log(`fun run${kotlin_export}TestCase(goldenJson: String, inputJson: String) {`);
     console.log('    assertEquals(');
     console.log('        goldenJson,');
-    console.log('        authzValueToJson(');
+    console.log('        authzResultToJson(');
     console.log(`            ${kotlin_export}(`);
     console.log('                jsonToAuthzValue(Json.parseToJsonElement(inputJson)),');
     console.log('                AuthzValue.UNDEFINED,');

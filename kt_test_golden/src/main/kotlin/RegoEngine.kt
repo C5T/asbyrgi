@@ -89,6 +89,18 @@ class AuthzResult {
         exitProcess(1)
         return false
     }
+
+    fun asJsonElement(): JsonElement {
+        if (!hasSomeResult) {
+            return JsonNull
+        } else if (hasUniqueResult) {
+            return authzValueToJson(someResult)
+        } else {
+            val elements: ArrayList<JsonElement> = arrayListOf()
+            allResultsList.forEach { elements.add(authzValueToJson(it)) }
+            return JsonArray(elements)
+        }
+    }
 }
 
 fun jsonToAuthzValue(element: JsonElement): AuthzValue = when (element) {
@@ -158,6 +170,8 @@ fun authzValueToJson(node: AuthzValue): JsonElement = when (node) {
         JsonArray(elements)
     }
 }
+
+fun authzResultToJson(result: AuthzResult): JsonElement = result.asJsonElement()
 
 fun regoDotStmt(input: AuthzValue, key: String): AuthzValue = when (input) {
     is AuthzValue.OBJECT -> input.fields.getOrElse(key, { AuthzValue.UNDEFINED })
