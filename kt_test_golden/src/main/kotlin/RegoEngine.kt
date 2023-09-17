@@ -26,7 +26,82 @@ sealed class AuthzValue {
     data class SET(val elems: MutableSet<AuthzValue>) : AuthzValue()
 }
 
-// TODO(dkorolev): Add a custom type for per-plan output, i.e. the `ResultsSet`.
+class AuthzResult {
+    private var hasSomeResult: Boolean = false
+    private var hasUniqueResult: Boolean = false
+    private var someResult: AuthzValue = AuthzValue.UNDEFINED
+    private var allResultsSet: MutableSet<AuthzValue> = mutableSetOf()
+    private var allResultsList: ArrayList<AuthzValue> = arrayListOf()
+
+    fun addToResultSet(result: AuthzValue) {
+        if (result is AuthzValue.UNDEFINED) {
+            println("""Attempted to add an `undefined` value into the result set. Treating as an error for now.""")
+            exitProcess(1)
+        }
+        if (!hasSomeResult) {
+            hasSomeResult = true
+            hasUniqueResult = true
+            someResult = result
+            allResultsSet.add(result)
+            allResultsList.add(result)
+        } else if (!hasUniqueResult || result != someResult) {
+            hasUniqueResult = false
+            allResultsSet.add(result)
+            allResultsList.add(result)
+        } else if (!allResultsSet.contains(result)) {
+            allResultsSet.add(result)
+            allResultsList.add(result)
+        }
+    }
+
+    fun isUnique() = hasUniqueResult
+
+    fun getUniqueResultOrFail(): AuthzValue {
+        if (hasUniqueResult) {
+            return someResult
+        } else {
+            println("""Attempted to add an `undefined` value into the result set. Treating as an error for now.""")
+            exitProcess(1)
+            return AuthzValue.UNDEFINED         
+        }
+    }
+
+    fun getBooleanResult(): Boolean {
+        if (hasUniqueResult) {
+            // TODO(dkorolev): `Smart cast to 'AuthzValue.BOOLEAN' is impossible, because ...`.
+            val copy = someResult
+            if (copy is AuthzValue.BOOLEAN) {
+                return copy.boolean
+            }
+        }
+        return false
+    }
+
+    fun getBooleanResultOrFail(): Boolean {
+        if (hasUniqueResult) {
+            // TODO(dkorolev): `Smart cast to 'AuthzValue.BOOLEAN' is impossible, because ...`.
+            val copy = someResult
+            if (copy is AuthzValue.BOOLEAN) {
+                return copy.boolean
+            }
+        }
+        println("""Expected a `boolean` result, seeing something else.""")
+        exitProcess(1)
+        return false
+    }
+
+    fun asJsonElement(): JsonElement {
+        if (!hasSomeResult) {
+            return JsonNull
+        } else if (hasUniqueResult) {
+            return authzValueToJson(someResult)
+        } else {
+            val elements: ArrayList<JsonElement> = arrayListOf()
+            allResultsList.forEach { elements.add(authzValueToJson(it)) }
+            return JsonArray(elements)
+        }
+    }
+}
 
 fun jsonToAuthzValue(element: JsonElement): AuthzValue = when (element) {
     is JsonNull -> {
@@ -95,6 +170,8 @@ fun authzValueToJson(node: AuthzValue): JsonElement = when (node) {
         JsonArray(elements)
     }
 }
+
+fun authzResultToJson(result: AuthzResult): JsonElement = result.asJsonElement()
 
 fun regoDotStmt(input: AuthzValue, key: String): AuthzValue = when (input) {
     is AuthzValue.OBJECT -> input.fields.getOrElse(key, { AuthzValue.UNDEFINED })
