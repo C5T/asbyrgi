@@ -3,7 +3,9 @@
 # NOTE(dkorolev): This is an internal script, designed to be run from within a Docker container.
 #                 It does work outside that container too if you have OPA installed :-) but that's not the intended usage.
 
-if [ "$1" == "rego2ir" ] ; then
+if [ "$1" == "asbyrgi_version" ] ; then
+  echo "Asbyrgi version: __ASBYRGI_VERSION_SET_BY_GITHUB_ACTION_CONTAINER_BUILDER__"
+elif [ "$1" == "rego2ir" ] ; then
   if [ $# == 3 ] ; then
     if ! opa build /dev/stdin -e "$2"/"$3" -t plan -o /dev/stdout | gunzip | tar x -O plan.json 2>/dev/null ; then
       echo 'OPA run failed.' >/dev/stderr
