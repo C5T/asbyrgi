@@ -1,8 +1,5 @@
 // DO NOT EDIT!
 //
-// NOTE(dkorolev): Hmm, the tests did not run, let's trigger the `[push]` event.
-// NOTE(dkorolev): Try 2.
-//
 // This file comes from Asbyrgi. It may and will evolve.
 //
 // If this file is checked into your repository, it is only there to simplify running & debugging the code locally.
@@ -19,15 +16,63 @@ import kotlinx.serialization.json.JsonPrimitive
 
 // TODO(dkorolev): Make the fields internal, expose getters/setters.
 sealed class AuthzValue {
-    object UNDEFINED : AuthzValue()
-    object NULL : AuthzValue()
-    data class BOOLEAN(val boolean: Boolean) : AuthzValue()
-    data class INT(val number: Int) : AuthzValue()
-    data class DOUBLE(val number: Double) : AuthzValue()
-    data class STRING(val string: String) : AuthzValue()
-    data class ARRAY(val elements: ArrayList<AuthzValue>) : AuthzValue()
-    data class OBJECT(val fields: MutableMap<String, AuthzValue>) : AuthzValue()
+    object UNDEFINED : AuthzValue() {
+        override fun toString(): String = "AuthzValue.UNDEFINED"
+    }
+    object NULL : AuthzValue() {
+        override fun toString(): String = "AuthzValue.NULL"
+    }
+    data class BOOLEAN(val boolean: Boolean) : AuthzValue() {
+        override fun toString(): String = "AuthzValue.BOOLEAN(${boolean})"
+    }
+    data class INT(val number: Int) : AuthzValue() {
+        override fun toString(): String = "AuthzValue.INT(${number})"
+    }
+    data class DOUBLE(val number: Double) : AuthzValue() {
+        override fun toString(): String = "AuthzValue.DOUBLE(${number})"
+    }
+    data class STRING(val string: String) : AuthzValue() {
+        override fun toString(): String = """AuthzValue.STRING("${string}")"""
+    }
+    data class ARRAY(val elements: ArrayList<AuthzValue> = arrayListOf()) : AuthzValue() {
+        override fun toString(): String = "AuthzValue.ARRAY(${elements})"
+        // TODO(dkorolev): This calls for templates!
+        fun addBoolean(value: Boolean): ARRAY {
+            elements.add(AuthzValue.BOOLEAN(value))
+            return this
+        }
+        fun addInt(value: Int): ARRAY {
+            elements.add(AuthzValue.INT(value))
+            return this
+        }
+        fun addString(value: String): ARRAY {
+            elements.add(AuthzValue.STRING(value))
+            return this
+        }
+        // TODO(dkorolev): More adders!
+    }
+    data class OBJECT(val fields: MutableMap<String, AuthzValue> = mutableMapOf()) : AuthzValue() {
+        override fun toString(): String = "AuthzValue.OBJECT(${fields})"
+        // TODO(dkorolev): This calls for templates!
+        fun setBoolean(key: String, value: Boolean): OBJECT {
+            fields[key] = AuthzValue.BOOLEAN(value)
+            return this
+        }
+        fun setInt(key: String, value: Int): OBJECT {
+            fields[key] = AuthzValue.INT(value)
+            return this
+        }
+        fun setString(key: String, value: String): OBJECT {
+            fields[key] = AuthzValue.STRING(value)
+            return this
+        }
+        // TODO(dkorolev): More adders!
+    }
     data class SET(val elems: MutableSet<AuthzValue>) : AuthzValue()
+
+    data class DATA(val path: String, val dataProvider: AuthzDataProvider) : AuthzValue() {
+        override fun toString(): String = """AuthzValue.DATA("${path}")"""
+    }
 }
 
 class AuthzResult {
@@ -36,6 +81,21 @@ class AuthzResult {
     private var someResult: AuthzValue = AuthzValue.UNDEFINED
     private var allResultsSet: MutableSet<AuthzValue> = mutableSetOf()
     private var allResultsList: ArrayList<AuthzValue> = arrayListOf()
+
+    override fun equals(rhs: Any?): Boolean {
+        if (rhs !is AuthzResult) return false
+        return allResultsSet == rhs.allResultsSet
+    }
+
+    override fun toString(): String {
+        if (!hasSomeResult) {
+            return "AuthzResult(EMPTY)"
+        } else if (hasUniqueResult) {
+            return "AuthzResult(${someResult})"
+        } else {
+            return "AuthzResult[${allResultsSet}]";
+        }
+    }
 
     fun addToResultSet(resultObject: AuthzValue) {
         // NOTE(dkorolev): We know that what's added to the result set is a `{"result":...}` object.
@@ -74,7 +134,7 @@ class AuthzResult {
         } else {
             println("""Attempted to add an `undefined` value into the result set. Treating as an error for now.""")
             exitProcess(1)
-            return AuthzValue.UNDEFINED         
+            return AuthzValue.UNDEFINED
         }
     }
 
@@ -112,6 +172,20 @@ class AuthzResult {
             allResultsList.forEach { elements.add(authzValueToJson(it)) }
             return JsonArray(elements)
         }
+    }
+
+    companion object {
+        fun BOOLEAN(b: Boolean): AuthzResult {
+            var r = AuthzResult()
+            r.hasSomeResult = true
+            r.hasUniqueResult = true
+            r.someResult = AuthzValue.BOOLEAN(b)
+            r.allResultsSet.add(r.someResult)
+            r.allResultsList.add(r.someResult)
+            return r
+        }
+
+        // TODO(dkorolev): More in-place "constructors" for `AuthzResult`.
     }
 }
 
@@ -181,11 +255,14 @@ fun authzValueToJson(node: AuthzValue): JsonElement = when (node) {
         node.elems.forEach { elements.add(authzValueToJson(it)) }
         JsonArray(elements)
     }
+    is AuthzValue.DATA -> {
+        JsonPrimitive("***DATA[${node.path}]***")
+    }
 }
 
 fun authzResultToJson(result: AuthzResult): JsonElement = result.asJsonElement()
 
-fun regoDotStmt(input: AuthzValue, key: String): AuthzValue = when (input) {
+fun regoDotStmt(input: AuthzValue, key: String, authzDataProvider: AuthzDataProvider): AuthzValue = when (input) {
     is AuthzValue.OBJECT -> input.fields.getOrElse(key, { AuthzValue.UNDEFINED })
     is AuthzValue.ARRAY -> {
         val i = key.toInt()
@@ -196,6 +273,15 @@ fun regoDotStmt(input: AuthzValue, key: String): AuthzValue = when (input) {
             println("""DotStmt on an array with an out-of-bounds index.""")
             exitProcess(1)
             AuthzValue.UNDEFINED
+        }
+    }
+    is AuthzValue.DATA -> {
+        val augmentedPath = input.path + "." + key
+        val maybeResult = authzDataProvider.maybeCompute(augmentedPath)
+        if (maybeResult != null) {
+            maybeResult
+        } else {
+            AuthzValue.DATA(augmentedPath, authzDataProvider)
         }
     }
     else -> {
@@ -276,6 +362,47 @@ fun regoStringWrapper(locals: MutableMap<Int, AuthzValue>, i: Int): String {
         println("We are not really accepting non-string and non-int indexes.")
         exitProcess(1)
         return ""
+    }
+}
+
+class AuthzDataProvider {
+    // TODO(dkorolev): This absolutely should be a trie one day, but this would do for the POC.
+    // TODO(dkorolev): Probably support the top-level `data` object too.
+
+    private var paths: MutableMap<String, () -> AuthzValue> = mutableMapOf()
+
+    fun injectBoolean(path: String, cb: () -> Boolean) {
+        fun helper(): AuthzValue = AuthzValue.BOOLEAN(cb())
+        paths[path] = ::helper
+    }
+
+    fun injectInt(path: String, cb: () -> Int) {
+        fun helper(): AuthzValue {
+            return AuthzValue.INT(cb())
+        }
+        paths[path] = ::helper
+    }
+
+    fun injectString(path: String, cb: () -> String) {
+        fun helper(): AuthzValue {
+            return AuthzValue.STRING(cb())
+        }
+        paths[path] = ::helper
+    }
+
+    // TODO(dkorolev): More injectors!
+
+    fun injectValue(path: String, cb: () -> AuthzValue) {
+        paths[path] = cb
+    }
+
+    fun maybeCompute(path: String): AuthzValue? {
+        val handler = paths[path]
+        if (handler != null) {
+            return handler()
+        } else {
+            return null
+        }
     }
 }
 
