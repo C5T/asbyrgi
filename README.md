@@ -1,4 +1,5 @@
-[![Tests](https://github.com/c5t/asbyrgi/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/c5t/asbyrgi/actions/workflows/tests.yml)
+[![Tests JS](https://github.com/c5t/asbyrgi/actions/workflows/tests-js.yml/badge.svg?branch=main)](https://github.com/c5t/asbyrgi/actions/workflows/tests-js.yml)
+[![Tests Kotlin](https://github.com/c5t/asbyrgi/actions/workflows/tests-kotlin.yml/badge.svg?branch=main)](https://github.com/c5t/asbyrgi/actions/workflows/tests-kotlin.yml)
 
 # Ásbyrgi
 
@@ -174,4 +175,4 @@ For the test to work, each `.rego` file should start with a `#!TEST` "shebang" l
 
 I plan to grow this set of tests dramatically, as its scope and coverage will be instrumental in developing a fully compliant high-performance specialized OPA engine moving forward. Would appreciate help here.
 
-All tests are run by a [GitHub action](https://github.com/C5T/Asbyrgi/actions/runs/2492433262).
+All tests are run by a Github Actions: [JavaScript](https://github.com/C5T/asbyrgi/actions/workflows/tests-js.yml), [Kotlin](https://github.com/C5T/asbyrgi/actions/workflows/tests-kotlin.yml).
