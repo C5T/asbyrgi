@@ -1,10 +1,14 @@
 // DO NOT EDIT!
 //
+// NOTE(dkorolev): Hmm, the tests did not run, let's trigger the `[push]` event.
+// NOTE(dkorolev): Try 2.
+//
 // This file comes from Asbyrgi. It may and will evolve.
 //
-// If this file is checked into your repository, it is only there to simplify running & debugging the code.
+// If this file is checked into your repository, it is only there to simplify running & debugging the code locally.
 // It is safe to assume it will eventually be overwritten by a newer verison.
-// In fact, it may even be overwritten by a git hook or a Github action, so, please, let it live as is.
+// In fact, it may even be overwritten by a git hook or a Github action.
+// So, please, let it live as is. Much appreciated! =)
 
 import kotlin.system.exitProcess
 import kotlinx.serialization.json.JsonArray
@@ -33,24 +37,32 @@ class AuthzResult {
     private var allResultsSet: MutableSet<AuthzValue> = mutableSetOf()
     private var allResultsList: ArrayList<AuthzValue> = arrayListOf()
 
-    fun addToResultSet(result: AuthzValue) {
-        if (result is AuthzValue.UNDEFINED) {
-            println("""Attempted to add an `undefined` value into the result set. Treating as an error for now.""")
+    fun addToResultSet(resultObject: AuthzValue) {
+        // NOTE(dkorolev): We know that what's added to the result set is a `{"result":...}` object.
+        if (resultObject is AuthzValue.OBJECT) {
+            val result = resultObject.fields["result"]
+            if (result != null) {
+                if (!hasSomeResult) {
+                    hasSomeResult = true
+                    hasUniqueResult = true
+                    someResult = result
+                    allResultsSet.add(result)
+                    allResultsList.add(result)
+                } else if (!hasUniqueResult || result != someResult) {
+                    hasUniqueResult = false
+                    allResultsSet.add(result)
+                    allResultsList.add(result)
+                } else if (!allResultsSet.contains(result)) {
+                    allResultsSet.add(result)
+                    allResultsList.add(result)
+                }
+            } else {
+               println("""The key `result` must be part of the object that is being added into the results set.""")
+               exitProcess(1)
+            }
+        } else {
+            println("""Attempted to add a non-object value into the result set. Treating as an error for now.""")
             exitProcess(1)
-        }
-        if (!hasSomeResult) {
-            hasSomeResult = true
-            hasUniqueResult = true
-            someResult = result
-            allResultsSet.add(result)
-            allResultsList.add(result)
-        } else if (!hasUniqueResult || result != someResult) {
-            hasUniqueResult = false
-            allResultsSet.add(result)
-            allResultsList.add(result)
-        } else if (!allResultsSet.contains(result)) {
-            allResultsSet.add(result)
-            allResultsList.add(result)
         }
     }
 
