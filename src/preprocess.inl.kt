@@ -7,8 +7,10 @@ class __KOTLIN_EXPORT_NAME__Statics { __INSERT_NEWLINE__ \
 
 #define EndOPADSL() \
    __INSERT_NEWLINE__ \
-    fun __KOTLIN_EXPORT_NAME__(authzInput: AuthzValue, authzData: AuthzValue = AuthzValue.UNDEFINED): AuthzResult { __INSERT_NEWLINE__ \
-    return __KOTLIN_EXPORT_NAME__Plan0(authzInput, authzData) __INSERT_NEWLINE__ \
+    fun __KOTLIN_EXPORT_NAME__(authzInput: AuthzValue, \
+                               authzDataProvider: AuthzDataProvider = AuthzDataProvider()): AuthzResult { \
+    __INSERT_NEWLINE__ \
+    return __KOTLIN_EXPORT_NAME__Plan0(authzInput, authzDataProvider) __INSERT_NEWLINE__ \
   }
 
 #define BeginStaticStrings() val STATIC_STRINGS: Array<String> = arrayOf(
@@ -26,7 +28,7 @@ class __KOTLIN_EXPORT_NAME__Statics { __INSERT_NEWLINE__ \
 #define FunctionReturnValue(function_index, local_return_index) ,local_return_index
 
 #define BeginFunction(function_index, function_name) \
-fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzValue>): AuthzValue { __INSERT_NEWLINE__ \
+fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzValue>, authzDataProvider: AuthzDataProvider): AuthzValue { __INSERT_NEWLINE__ \
     val functionArgumentIndexes = __KOTLIN_EXPORT_NAME__Statics.FUNCTION_SIGNATURES[function_index].argIndex __INSERT_NEWLINE__ \
     val functionReturnValueIndex = __KOTLIN_EXPORT_NAME__Statics.FUNCTION_SIGNATURES[function_index].retvalIndex __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, AuthzValue> = mutableMapOf() __INSERT_NEWLINE__ \
@@ -41,13 +43,17 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 #define BeginBlock() run {
 #define EndBlock() RegoBlockResult.COMPLETED __INSERT_NEWLINE__ }
 
+#define BeginBlockStmt(rowcol) run {
+#define EndBlockStmt() RegoBlockResult.COMPLETED __INSERT_NEWLINE__ }
+
 #define ArrayAppendStmt(array, value, rowcol) regoArrayAppendStmt(regoVal(locals, array), regoVal(locals, value))
 
 #define AssignIntStmt(value, target, rowcol) locals[target] = AuthzValue.INT(value)
 #define AssignVarOnceStmt(source, target, rowcol) if (!(regoVal(locals, target) is AuthzValue.UNDEFINED)) return@run RegoBlockResult.INTERRUPTED __INSERT_NEWLINE__ locals[target] = regoVal(locals, source)
 #define AssignVarStmt(source, target, rowcol) locals[target] = regoVal(locals, source)
 
-// TODO(dkorolev): `BreakStmt`.
+#define BreakStmt(rowcol) return@run RegoBlockResult.INTERRUPTED
+
 // TODO(dkorolev): `CallDynamicStmt`.
 
 #define CallStmtPassArg(arg_index, arg_value) callArgs[arg_index] = regoVal(locals, arg_value)
@@ -56,12 +62,12 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 #define CallBuiltinStmtEnd(func, target) RegoBuiltins.func(callArgs) __INSERT_NEWLINE__ }
 
 #define CallUserStmtBegin(func, target, rowcol) locals[target] = run { __INSERT_NEWLINE__ val callArgs: MutableMap<Int, AuthzValue> = mutableMapOf()
-#define CallUserStmtEnd(func, target) __KOTLIN_EXPORT_NAME__Function##func(callArgs) __INSERT_NEWLINE__ }
+#define CallUserStmtEnd(func, target) __KOTLIN_EXPORT_NAME__Function##func(callArgs, authzDataProvider) __INSERT_NEWLINE__ }
 
 #define NotStmtBegin(rowcol) if (run {
 #define NotStmtEnd() RegoBlockResult.COMPLETED } == RegoBlockResult.COMPLETED) return@run RegoBlockResult.INTERRUPTED
 
-#define DotStmt(source, key, target, rowcol) locals[target] = regoDotStmt(regoVal(locals, source), regoStringWrapper(locals, key))
+#define DotStmt(source, key, target, rowcol) locals[target] = regoDotStmt(regoVal(locals, source), regoStringWrapper(locals, key), authzDataProvider)
 #define EqualStmt(a, b, rowcol) if (regoVal(locals, a) != regoVal(locals, b)) return@run RegoBlockResult.INTERRUPTED
 #define IsArrayStmt(array, rowcol) if (!(regoVal(locals, array) is AuthzValue.ARRAY)) return@run RegoBlockResult.INTERRUPTED
 #define IsDefinedStmt(source, rowcol) if (regoVal(locals, source) is AuthzValue.UNDEFINED) return@run RegoBlockResult.INTERRUPTED
@@ -132,11 +138,13 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 #define StringConstantIndex(a) a
 
 #define BeginPlan(plan_index, plan_name) \
-fun __KOTLIN_EXPORT_NAME__Plan##plan_index(authzInput: AuthzValue, authzData: AuthzValue): AuthzResult { __INSERT_NEWLINE__ \
+fun __KOTLIN_EXPORT_NAME__Plan##plan_index(authzInput: AuthzValue, \
+                                           authzDataProvider: AuthzDataProvider = AuthzDataProvider()): AuthzResult { \
+    __INSERT_NEWLINE__ \
     val locals: MutableMap<Int, AuthzValue> = mutableMapOf() __INSERT_NEWLINE__ \
     val result = AuthzResult() __INSERT_NEWLINE__ \
     locals[0] = authzInput __INSERT_NEWLINE__ \
-    locals[1] = authzData
+    locals[1] = AuthzValue.DATA("data", authzDataProvider)
 
 #define EndPlan(plan_index, plan_name)  \
     return result __INSERT_NEWLINE__ \

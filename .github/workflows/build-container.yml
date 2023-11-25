@@ -18,13 +18,19 @@ jobs:
     steps:
       - name: Clone
         uses: actions/checkout@v3
+      - name: Set Version
+        run: |
+          sed -i "s/__ASBYRGI_VERSION_SET_BY_GITHUB_ACTION_CONTAINER_BUILDER__/${GIT_COMMIT:0:7}/" src/docker_entrypoint.sh
       - name: Build the container
         run: |
           docker build -t "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest" .
+      - name: Test Version
+        run: |
+          docker run -i "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest" asbyrgi_version
       - name: Login to GHCR
         run: echo "${GHCR_PASSWORD}" | docker login ghcr.io --username "${GHCR_USERNAME}" --password-stdin
       - name: Push to GHCR
         run: |
           docker push "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest"
-          docker tag "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest" "ghcr.io/${GHCR_USERNAME}/asbyrgi:${GIT_COMMIT:0:6}"
-          docker push "ghcr.io/${GHCR_USERNAME}/asbyrgi:${GIT_COMMIT:0:6}"
+          docker tag "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest" "ghcr.io/${GHCR_USERNAME}/asbyrgi:${GIT_COMMIT:0:7}"
+          docker push "ghcr.io/${GHCR_USERNAME}/asbyrgi:${GIT_COMMIT:0:7}"
