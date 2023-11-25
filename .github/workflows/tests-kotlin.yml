@@ -2,8 +2,8 @@ name: Kotlin Transpilation Tests
 
 on:
   workflow_dispatch:
-  # NOTE(dkorolev): `on push` is the only way to run this action, since we're not on the `main` branch yet =)
-  push:
+  pull_request:
+    types: [opened, synchronize]
 
 jobs:
   run-tests-kotlin:
