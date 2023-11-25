@@ -1,5 +1,7 @@
 // DO NOT EDIT!
 //
+// NOTE(dkorolev): Hmm, the tests did not run, let's trigger the `[push]` event.
+//
 // This file comes from Asbyrgi. It may and will evolve.
 //
 // If this file is checked into your repository, it is only there to simplify running & debugging the code locally.
