@@ -2,9 +2,10 @@
 //
 // This file comes from Asbyrgi. It may and will evolve.
 //
-// If this file is checked into your repository, it is only there to simplify running & debugging the code.
+// If this file is checked into your repository, it is only there to simplify running & debugging the code locally.
 // It is safe to assume it will eventually be overwritten by a newer verison.
-// In fact, it may even be overwritten by a git hook or a Github action, so, please, let it live as is.
+// In fact, it may even be overwritten by a git hook or a Github action.
+// So, please, let it live as is. Much appreciated! =)
 
 import kotlin.system.exitProcess
 import kotlinx.serialization.json.JsonArray
