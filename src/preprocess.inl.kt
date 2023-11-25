@@ -43,13 +43,17 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 #define BeginBlock() run {
 #define EndBlock() RegoBlockResult.COMPLETED __INSERT_NEWLINE__ }
 
+#define BeginBlockStmt(rowcol) run {
+#define EndBlockStmt() RegoBlockResult.COMPLETED __INSERT_NEWLINE__ }
+
 #define ArrayAppendStmt(array, value, rowcol) regoArrayAppendStmt(regoVal(locals, array), regoVal(locals, value))
 
 #define AssignIntStmt(value, target, rowcol) locals[target] = AuthzValue.INT(value)
 #define AssignVarOnceStmt(source, target, rowcol) if (!(regoVal(locals, target) is AuthzValue.UNDEFINED)) return@run RegoBlockResult.INTERRUPTED __INSERT_NEWLINE__ locals[target] = regoVal(locals, source)
 #define AssignVarStmt(source, target, rowcol) locals[target] = regoVal(locals, source)
 
-// TODO(dkorolev): `BreakStmt`.
+#define BreakStmt(rowcol) return@run RegoBlockResult.INTERRUPTED
+
 // TODO(dkorolev): `CallDynamicStmt`.
 
 #define CallStmtPassArg(arg_index, arg_value) callArgs[arg_index] = regoVal(locals, arg_value)

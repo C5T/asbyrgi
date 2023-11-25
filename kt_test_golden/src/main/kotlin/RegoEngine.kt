@@ -49,7 +49,10 @@ sealed class AuthzValue {
             elements.add(AuthzValue.STRING(value))
             return this
         }
-        // TODO(dkorolev): More adders!
+        fun addValue(value: AuthzValue): ARRAY {
+            elements.add(value)
+            return this
+        }
     }
     data class OBJECT(val fields: MutableMap<String, AuthzValue> = mutableMapOf()) : AuthzValue() {
         override fun toString(): String = "AuthzValue.OBJECT(${fields})"
@@ -66,7 +69,10 @@ sealed class AuthzValue {
             fields[key] = AuthzValue.STRING(value)
             return this
         }
-        // TODO(dkorolev): More adders!
+        fun setValue(key: String, value: AuthzValue): OBJECT {
+            fields[key] = value
+            return this
+        }
     }
     data class SET(val elems: MutableSet<AuthzValue>) : AuthzValue()
 
@@ -371,29 +377,33 @@ class AuthzDataProvider {
 
     private var paths: MutableMap<String, () -> AuthzValue> = mutableMapOf()
 
-    fun injectBoolean(path: String, cb: () -> Boolean) {
+    fun injectBoolean(path: String, cb: () -> Boolean): AuthzDataProvider {
         fun helper(): AuthzValue = AuthzValue.BOOLEAN(cb())
         paths[path] = ::helper
+        return this
     }
 
-    fun injectInt(path: String, cb: () -> Int) {
+    fun injectInt(path: String, cb: () -> Int): AuthzDataProvider {
         fun helper(): AuthzValue {
             return AuthzValue.INT(cb())
         }
         paths[path] = ::helper
+        return this
     }
 
-    fun injectString(path: String, cb: () -> String) {
+    fun injectString(path: String, cb: () -> String): AuthzDataProvider {
         fun helper(): AuthzValue {
             return AuthzValue.STRING(cb())
         }
         paths[path] = ::helper
+        return this
     }
 
     // TODO(dkorolev): More injectors!
 
-    fun injectValue(path: String, cb: () -> AuthzValue) {
+    fun injectValue(path: String, cb: () -> AuthzValue): AuthzDataProvider {
         paths[path] = cb
+        return this
     }
 
     fun maybeCompute(path: String): AuthzValue? {
@@ -416,7 +426,8 @@ class RegoBuiltins {
             if (a is AuthzValue.INT && b is AuthzValue.INT) {
                 return AuthzValue.INT(a.number + b.number)
             } else {
-                println("""`plus` on non-Ints, not allowed for now.""")
+                // NOTE(dkorolev): Instrument all other `println`-s next to `exitProcess`-es with operands?
+                println("""`plus` on non-Ints, not allowed for now, seeing ${a} + ${b}.""")
                 exitProcess(1)
                 return AuthzValue.UNDEFINED
             }

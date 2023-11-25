@@ -293,13 +293,18 @@ const wrap_for_assignment = (x) => {
 #define BeginBlock() (() => {
 #define EndBlock() })();
 
+#define BeginBlockStmt(rowcol) (() => {
+#define EndBlockStmt(rowcol) })();
+
 // TODO(dkorolev): Checks and early returns everywhere.
 
 #define ArrayAppendStmt(array, value, rowcol) if (array === undefined || array.t !== 'array') return; array.v.push(wrap_for_assignment(value));
 #define AssignIntStmt(value, target, rowcol) target = { t: 'number', v: value };  // TODO(dkorolev): Check the type, fail if wrong, I assume?
 #define AssignVarOnceStmt(source, target, rowcol) if (target !== undefined) return; target = wrap_for_assignment(source);
 #define AssignVarStmt(source, target, rowcol) target = wrap_for_assignment(source);
-// TODO(dkorolev): `BreakStmt`.
+
+#define BreakStmt(rowcol) return;
+
 // TODO(dkorolev): `CallDynamicStmt`.
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallBuiltinStmtBegin(func, target, rowcol) target = (() => { let args = [];
