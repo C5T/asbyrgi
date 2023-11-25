@@ -26,7 +26,7 @@ jobs:
           docker build -t "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest" .
       - name: Test Version
         run: |
-          echo asbyrgi_version | docker run -it "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest"
+          echo asbyrgi_version | docker run -t "ghcr.io/${GHCR_USERNAME}/asbyrgi:latest"
       - name: Login to GHCR
         run: echo "${GHCR_PASSWORD}" | docker login ghcr.io --username "${GHCR_USERNAME}" --password-stdin
       - name: Push to GHCR
