@@ -1,6 +1,7 @@
 // DO NOT EDIT!
 //
 // NOTE(dkorolev): Hmm, the tests did not run, let's trigger the `[push]` event.
+// NOTE(dkorolev): Try 2.
 //
 // This file comes from Asbyrgi. It may and will evolve.
 //
