@@ -13,4 +13,12 @@ input_y = input.y
 default input_z := "unset"
 input_z = input.z
 
-not_yet_dp := concat("", ["input:{x:\"", input_x,  "\",y:\"", input_y, "\",z:\"", input_z, "\"}"])
+not_yet_dp := concat("", [
+    "input:{x:\"",
+    input_x,
+    "\",y:\"",
+    input_y,
+    "\",z:\"",
+    input_z,
+    "\"}"
+  ])
