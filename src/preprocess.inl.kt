@@ -49,7 +49,7 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 #define ArrayAppendStmt(array, value, rowcol) regoArrayAppendStmt(regoVal(locals, array), regoVal(locals, value))
 
 #define AssignIntStmt(value, target, rowcol) locals[target] = AuthzValue.INT(value)
-#define AssignVarOnceStmt(source, target, rowcol) if (!(regoVal(locals, target) is AuthzValue.UNDEFINED)) return@run RegoBlockResult.INTERRUPTED __INSERT_NEWLINE__ locals[target] = regoVal(locals, source)
+#define AssignVarOnceStmt(source, target, rowcol) if (!(isRegoValNotDefined(regoVal(locals, target)))) return@run RegoBlockResult.INTERRUPTED __INSERT_NEWLINE__ locals[target] = regoVal(locals, source)
 #define AssignVarStmt(source, target, rowcol) locals[target] = regoVal(locals, source)
 
 #define BreakStmt(rowcol) return@run RegoBlockResult.INTERRUPTED
@@ -70,9 +70,9 @@ fun __KOTLIN_EXPORT_NAME__Function##function_index(args: MutableMap<Int, AuthzVa
 #define DotStmt(source, key, target, rowcol) locals[target] = regoDotStmt(regoVal(locals, source), regoStringWrapper(locals, key), authzDataProvider)
 #define EqualStmt(a, b, rowcol) if (regoVal(locals, a) != regoVal(locals, b)) return@run RegoBlockResult.INTERRUPTED
 #define IsArrayStmt(array, rowcol) if (!(regoVal(locals, array) is AuthzValue.ARRAY)) return@run RegoBlockResult.INTERRUPTED
-#define IsDefinedStmt(source, rowcol) if (regoVal(locals, source) is AuthzValue.UNDEFINED) return@run RegoBlockResult.INTERRUPTED
+#define IsDefinedStmt(source, rowcol) if (isRegoValNotDefined(regoVal(locals, source))) return@run RegoBlockResult.INTERRUPTED
 #define IsObjectStmt(object, rowcol) if (!(regoVal(locals, object) is AuthzValue.OBJECT)) return@run RegoBlockResult.INTERRUPTED
-#define IsUndefinedStmt(source, rowcol) if (!(regoVal(locals, source) is AuthzValue.UNDEFINED)) return@run RegoBlockResult.INTERRUPTED
+#define IsUndefinedStmt(source, rowcol) if (!isRegoValNotDefined(regoVal(locals, source))) return@run RegoBlockResult.INTERRUPTED
 
 // TODO(dkorolev): Double-check that `LenStmt` is for both arrays and object. Also sets, right?
 #define LenStmt(source, target, rowcol) \
