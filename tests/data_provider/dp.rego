@@ -1,4 +1,4 @@
-#!TEST use not_yet_dp
+#!TEST use data_provider_output
 
 package use
 
@@ -19,7 +19,7 @@ data_a = data.a
 default data_p_q := "unset"
 data_p_q = data.p.q
 
-not_yet_dp := concat("", [
+data_provider_output := concat("", [
     "input:{x:\"",
     input_x,
     "\",y:\"",
