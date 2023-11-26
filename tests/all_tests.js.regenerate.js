@@ -33,13 +33,58 @@ console.log('');
 
 let cases = {};
 
+const prepareTestCase = (text) => {
+  const fields = text.split('\t');
+  const input = JSON.parse(fields[0]);
+  if (fields.length === 1) {
+    return {
+      desc: JSON.stringify(input),
+      input: input,
+      data: null
+    };
+  } else {
+    let body = {
+      data: {}
+    };
+    for (let i = 1; i < fields.length; ++i) {
+      const elem = JSON.parse(fields[i]);
+      const keys = Object.keys(elem);
+      if (keys.length !== 1) {
+        console.error('Each `data` JSON, after the tab, should only have one key.');
+        process.exit(1);
+      }
+      let placeholder = body;
+      let placeholder_key = 'data';
+      let step_made = false;
+      keys[0].split('.').forEach(k => {
+        step_made = true;
+        if (typeof placeholder[placeholder_key] != 'object') {
+          placeholder[placeholder_key] = {};
+        }
+        placeholder = placeholder[placeholder_key];
+        placeholder_key = k;
+      });
+      if (!step_made) {
+        console.error('Each `data` JSON, after the tab, should only have one key, and this key should not be empty.');
+        process.exit(1);
+      }
+      placeholder[placeholder_key] = elem[keys[0]];
+    }
+    return {
+      desc: JSON.stringify(input) + ' + ' + JSON.stringify(body.data),
+      input: input,
+      data: body.data
+    };
+  }
+};
+
 rego.forEach(fn => {
   let path = fn.split('/');
   path[path.length - 1] = 'tests.json';
   const tests_path = path.join('/');
-  const tests = (() => {
+  const testsWithOptionalData = (() => {
     try {
-      return fs.readFileSync(tests_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(JSON.parse);
+      return fs.readFileSync(tests_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(prepareTestCase);
     } catch(e) {
       console.error(`Error reading '${tests_path}', something's wrong with the '.rego' files in the repo.`);
       process.exit(1);
@@ -54,11 +99,11 @@ rego.forEach(fn => {
       process.exit(1);
     }
   })();
-  if (tests.length !== goldens.length) {
+  if (testsWithOptionalData.length !== goldens.length) {
     console.error(`The number of tests and goldens don't match for '${fn}'.`);
     process.exit(1);
   }
-  cases[fn] = { tests, goldens };
+  cases[fn] = { tests: testsWithOptionalData, goldens };
 });
 
 Object.keys(cases).sort().forEach(fn => {
@@ -67,9 +112,9 @@ Object.keys(cases).sort().forEach(fn => {
   console.log(`describe('${fn}', () => {`);
   console.log(`  const policy = get_policy_main('${fn}');`);
   for (let i = 0; i < t.tests.length; ++i) {
-    // NOTE(dkorolev): Double `JSON.stringify` to escape in `"Zed's dead baby."`. =)
-    console.log(`  it(${JSON.stringify(JSON.stringify(t.tests[i]))}, () => {`);
-    console.log(`    expect(policy(${JSON.stringify(t.tests[i])})).to.deep.equal(${JSON.stringify({result: t.goldens[i]})});`);
+    // NOTE(dkorolev): The outer `JSON.stringify` is needed to escape the quote in in `"Zed's dead baby."`. =)
+    console.log(`  it(${JSON.stringify(t.tests[i].desc)}, () => {`);
+    console.log(`    expect(policy(${JSON.stringify(t.tests[i].input)}, ${JSON.stringify(t.tests[i].data)})).to.deep.equal(${JSON.stringify({result: t.goldens[i]})});`);
     console.log(`  });`);
   }
   console.log(`});`);
