@@ -50,7 +50,6 @@ rl.on('close', () => {
   }
 
   const N = lines.length / 2;
-  console.error(`Working with ${N} test cases.`);
 
   let tests = [];
   for (let i = 0; i < N; ++i) {
