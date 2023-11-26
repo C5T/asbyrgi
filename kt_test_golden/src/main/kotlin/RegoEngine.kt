@@ -542,6 +542,29 @@ class RegoBuiltins {
                 return AuthzValue.UNDEFINED
             }
         }
+        fun concat(args: MutableMap<Int, AuthzValue>): AuthzValue {
+            val a: AuthzValue = regoVal(args, 0)
+            val b: AuthzValue = regoVal(args, 1)
+            if (a is AuthzValue.STRING && b is AuthzValue.ARRAY) {
+                val r = ArrayList<String>()
+                b.elements.forEach {
+                    if (it is AuthzValue.STRING) {
+                        r.add(it.string)
+                    } else {
+                        // NOTE(dkorolev): I assume this should not be allowed ever, not just "for now".
+                        println("""An element in the array passed to `concat` is not a STRING, not allowed.""")
+                        exitProcess(1)
+                        return AuthzValue.UNDEFINED
+                    }
+                }
+                return AuthzValue.STRING(r.joinToString(separator=a.string))
+            } else {
+                // NOTE(dkorolev): I assume this should not be allowed ever, not just "for now".
+                println("""`concat` not on {STRING,ARRAY}, not allowed.""")
+                exitProcess(1)
+                return AuthzValue.UNDEFINED
+            }
+        }
     }
     class numbers {
         companion object {
