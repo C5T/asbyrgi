@@ -116,11 +116,13 @@ elif [ "$1" == "rego2kt" ] ; then
 elif [ "$1" == "gengolden" ] ; then
   if [ $# == 5 ] ; then
     while read -r QUERY ; do
+      rm -f /tmp/*.callopa.tmp
       opa eval \
         -d /input/"$2" \
         $(echo "$QUERY" | node src/compose_opa_golden_command.js) \
         data.$3.$4 \
         | jq -c .result[0].expressions[0].value
+      rm -f /tmp/*.callopa.tmp
     done < /input/"$5"
     exit 0
   else
