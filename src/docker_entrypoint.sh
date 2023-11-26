@@ -120,7 +120,7 @@ elif [ "$1" == "gengolden" ] ; then
         -d /input/"$2" \
         $(echo "$QUERY" | node src/compose_opa_golden_command.js) \
         data.$3.$4 \
-        | jq -r .result[0].expressions[0].value
+        | jq -c .result[0].expressions[0].value
     done < /input/"$5"
     exit 0
   else
