@@ -329,7 +329,7 @@ const wrap_for_assignment = (x) => {
 #define BreakStmt(rowcol) return;
 
 // TODO(dkorolev): `CallDynamicStmt`.
-#define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
+#define CallStmtPassArg(arg_index, arg_value) args[arg_index] = wrap_for_assignment(arg_value);
 #define CallBuiltinStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallBuiltinStmtEnd(func, target) return opa_get_function_impl( {builtin_func: opa_builtins.func, debug_builtin_func_name: #func} )(args)})();
 #define CallUserStmtBegin(func, target, rowcol) target = (() => { let args = [];
