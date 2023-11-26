@@ -97,6 +97,24 @@ const opa_split = (args) => {
   return undefined;
 };
 
+const opa_concat = (args) => {
+  if (args[0].t === 'string') {
+    if (typeof args[1] === 'array') {
+      let pieces = [];
+      for (let i = 0; i < args[1].v.length; ++i) {
+        if (typeof args[1].v[i].t !== 'string') {
+          printErrorNotImplemented();
+          return undefined;
+        }
+        pieces.push(args[1].v[i].v);
+      }
+      return {t: 'string', v: pieces.join(args[0].v)};
+    }
+  }
+  printErrorNotImplemented();
+  return undefined;
+};
+
 const opa_is_value_in_set = (args) => {
   if (args[1].t === 'set' && args[0].t in args[1].v) {
     return { t: 'boolean', v: args[1].v[args[0].t].has(args[0].v) };
@@ -131,6 +149,7 @@ const opa_builtins = {
   internal: {
     member_2: opa_is_value_in_set,  // NOTE(dkorolev): Inferred from OPA's source code.
   },
+  concat: opa_concat,
 };
 
 const opa_object_get_by_key = (x, key) => {
