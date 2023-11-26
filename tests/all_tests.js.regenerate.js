@@ -33,13 +33,22 @@ console.log('');
 
 let cases = {};
 
+const prepareTestCase = (text) => {
+  const json = JSON.parse(text);
+  return {
+    desc: JSON.stringify(json) + " WITHOUT DATA!",
+    input: json,
+    data: null
+  };
+};
+
 rego.forEach(fn => {
   let path = fn.split('/');
   path[path.length - 1] = 'tests.json';
   const tests_path = path.join('/');
-  const tests = (() => {
+  const testsWithOptionalData = (() => {
     try {
-      return fs.readFileSync(tests_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(JSON.parse);
+      return fs.readFileSync(tests_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(prepareTestCase);
     } catch(e) {
       console.error(`Error reading '${tests_path}', something's wrong with the '.rego' files in the repo.`);
       process.exit(1);
@@ -54,11 +63,11 @@ rego.forEach(fn => {
       process.exit(1);
     }
   })();
-  if (tests.length !== goldens.length) {
+  if (testsWithOptionalData.length !== goldens.length) {
     console.error(`The number of tests and goldens don't match for '${fn}'.`);
     process.exit(1);
   }
-  cases[fn] = { tests, goldens };
+  cases[fn] = { tests: testsWithOptionalData, goldens };
 });
 
 Object.keys(cases).sort().forEach(fn => {
@@ -67,9 +76,9 @@ Object.keys(cases).sort().forEach(fn => {
   console.log(`describe('${fn}', () => {`);
   console.log(`  const policy = get_policy_main('${fn}');`);
   for (let i = 0; i < t.tests.length; ++i) {
-    // NOTE(dkorolev): Double `JSON.stringify` to escape in `"Zed's dead baby."`. =)
-    console.log(`  it(${JSON.stringify(JSON.stringify(t.tests[i]))}, () => {`);
-    console.log(`    expect(policy(${JSON.stringify(t.tests[i])})).to.deep.equal(${JSON.stringify({result: t.goldens[i]})});`);
+    // NOTE(dkorolev): The outer `JSON.stringify` is needed to escape the quote in in `"Zed's dead baby."`. =)
+    console.log(`  it(${JSON.stringify(t.tests[i].desc)}, () => {`);
+    console.log(`    expect(policy(${JSON.stringify(t.tests[i].input)}, ${JSON.stringify(t.tests[i].data)})).to.deep.equal(${JSON.stringify({result: t.goldens[i]})});`);
     console.log(`  });`);
   }
   console.log(`});`);
