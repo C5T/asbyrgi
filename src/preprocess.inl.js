@@ -243,6 +243,10 @@ const opa_get_function_impl = (f) => {
   if (typeof f === 'number') {
     return function_bodies[f];
   } else {
+    if (!f.builtin_func) {
+      console.error(`Unimplemented OPA builtin function: '${f.debug_builtin_func_name}'.`);
+      process.exit(1);
+    }
     return f.builtin_func;
   }
 };
@@ -308,7 +312,7 @@ const wrap_for_assignment = (x) => {
 // TODO(dkorolev): `CallDynamicStmt`.
 #define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
 #define CallBuiltinStmtBegin(func, target, rowcol) target = (() => { let args = [];
-#define CallBuiltinStmtEnd(func, target) return opa_get_function_impl( {builtin_func: opa_builtins.func} )(args)})();
+#define CallBuiltinStmtEnd(func, target) return opa_get_function_impl( {builtin_func: opa_builtins.func, debug_builtin_func_name: #func} )(args)})();
 #define CallUserStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallUserStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
 #define NotStmtBegin(rowcol) if ((() => {
