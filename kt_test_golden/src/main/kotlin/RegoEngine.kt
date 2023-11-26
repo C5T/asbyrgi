@@ -356,6 +356,10 @@ fun regoVal(locals: MutableMap<Int, AuthzValue>, index: Int): AuthzValue = local
 fun regoVal(unused: MutableMap<Int, AuthzValue>, value: AuthzValue.BOOLEAN): AuthzValue = value
 fun regoVal(unused: MutableMap<Int, AuthzValue>, value: String): AuthzValue = AuthzValue.STRING(value)
 
+// Treat `DATA` as `UNDEFINED`, because it practically is!
+// Any `DATA` field from `.data` that is defined immediately becomes the respective value.
+fun isRegoValNotDefined(v: AuthzValue): Boolean = (v is AuthzValue.UNDEFINED) || (v is AuthzValue.DATA)
+
 // TODO(dkorolev): A special type for indexes, as indexing arrays as string is sort of dated in 2023.
 fun regoStringWrapper(unused: MutableMap<Int, AuthzValue>, s: String): String = s
 fun regoStringWrapper(locals: MutableMap<Int, AuthzValue>, i: Int): String {
