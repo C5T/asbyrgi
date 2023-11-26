@@ -5,15 +5,19 @@
 let function_bodies = {};
 let plans = {};
 
-const printErrorNotImplemented = () => {
-  console.error(`Not implemented in ${(new Error()).stack.split('\n')[2]}`);
+const printErrorNotImplemented = (x) => {
+  console.error(`Something in OPA transpilation is not yet implemented.\n${(new Error()).stack}`);
+  if (x !== undefined) {
+    console.log(JSON.stringify(x, null, 2));
+  }
+  process.exit(1);
 };
 
 const opa_eq = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v === args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -22,7 +26,7 @@ const opa_neq = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v !== args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -31,7 +35,7 @@ const opa_lt = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v < args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -40,7 +44,7 @@ const opa_gt = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v > args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -49,7 +53,7 @@ const opa_lte = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v <= args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -58,7 +62,7 @@ const opa_gte = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v >= args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -71,15 +75,15 @@ const opa_rem = (args) => {
       if (b !== 0) {
         return { t: 'number', v: args[0].v % args[1].v };
       } else {
-        printErrorNotImplemented();
+        printErrorNotImplemented(args);
         return undefined;
       }
     } else {
-      printErrorNotImplemented();
+      printErrorNotImplemented(args);
       return undefined;
     }
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
   return undefined;
@@ -93,7 +97,7 @@ const opa_split = (args) => {
       return {t: 'string', v: args[0].v.split(args[1].v)};
     }
   }
-  printErrorNotImplemented();
+  printErrorNotImplemented(args);
   return undefined;
 };
 
@@ -103,7 +107,7 @@ const opa_concat = (args) => {
       let pieces = [];
       for (let i = 0; i < args[1].v.length; ++i) {
         if (typeof args[1].v[i].t !== 'string') {
-          printErrorNotImplemented();
+          printErrorNotImplemented(args);
           return undefined;
         }
         pieces.push(args[1].v[i].v);
@@ -111,7 +115,7 @@ const opa_concat = (args) => {
       return {t: 'string', v: pieces.join(args[0].v)};
     }
   }
-  printErrorNotImplemented();
+  printErrorNotImplemented(args);
   return undefined;
 };
 
@@ -119,7 +123,7 @@ const opa_is_value_in_set = (args) => {
   if (args[1].t === 'set' && args[0].t in args[1].v) {
     return { t: 'boolean', v: args[1].v[args[0].t].has(args[0].v) };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
