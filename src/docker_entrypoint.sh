@@ -120,7 +120,7 @@ elif [ "$1" == "gengolden" ] ; then
     OPA_PID=$!
     sleep 0.5  # TODO(dkorolev): I would love to check `localhost:8181/health`, but it just returns `{}`, w/o HTTP code or body.
     while read -r QUERY ; do
-      curl -s -d @<(echo $QUERY | node src/compose_curl_golden_command.js) localhost:8181/v1/data | jq -c .result.$3.$4
+      curl -s -d @<(echo "$QUERY" | node src/compose_curl_golden_command.js) localhost:8181/v1/data | jq -c .result.$3.$4
     done < /input/"$5"
     kill $OPA_PID
     wait
