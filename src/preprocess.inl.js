@@ -90,14 +90,8 @@ const opa_rem = (args) => {
 };
 
 const opa_split = (args) => {
-  if (args[0].t === 'string') {
-    // TODO(dkorolev): Remove this in the next commit and make sure the tests pass!
-    //                 (Since `wrap_for_assignment` is already in place down there when populating the `args`.)
-    if (typeof args[1] === 'string') {
-      return {t: 'string', v: args[0].v.split(args[1])};
-    } else if (args[1].t === 'string') {
-      return {t: 'string', v: args[0].v.split(args[1].v)};
-    }
+  if (args[0].t === 'string' && args[1].t === 'string') {
+    return {t: 'string', v: args[0].v.split(args[1].v)};
   }
   printErrorNotImplemented(args);
   return undefined;
