@@ -22,7 +22,27 @@ rl.on('line', (line) => {
         }
         const fn = `/tmp/opa_data_${field_index}.callopa.tmp`;
         command.push(`-d ${fn}`);
-        fs.writeFileSync(fn, JSON.stringify(elem) + '\n');
+
+        let body = {
+          data: {}
+        };
+        let placeholder = body;
+        let placeholder_key = 'data';
+        let step_made = false;
+        keys[0].split('.').forEach(k => {
+          step_made = true;
+          if (typeof placeholder[placeholder_key] != 'object') {
+            placeholder[placeholder_key] = {};
+          }
+          placeholder = placeholder[placeholder_key];
+          placeholder_key = k;
+        });
+        if (!step_made) {
+          console.error('Each `data` JSON, after the tab, should only have one key, and this key should not be empty.');
+          process.exit(1);
+        }
+        placeholder[placeholder_key] = elem[keys[0]];
+        fs.writeFileSync(fn, JSON.stringify(body.data) + '\n');
       }
     }
     console.log(command.join(' '));
