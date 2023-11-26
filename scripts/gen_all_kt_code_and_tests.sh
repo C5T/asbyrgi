@@ -14,18 +14,9 @@ for REGO_TEST_CASE in $(find tests/ -iname '*.rego' | sort); do
   if [ "$REGO_KT_IMPL_NAME" != "null" ] ; then
     ./scripts/gen_all_kt.sh.helper $CONTAINER_ID $REGO_TEST_CASE
     cp $REGO_TEST_CASE.kt kt_test/src/main/kotlin/$REGO_KT_IMPL_NAME.kt
-    HEADER=$(head -n 1 "$REGO_TEST_CASE")
-    if [[ "$HEADER" =~ \#!TEST ]] ; then
-      read -r UNUNSED_TEST PACKAGE RULE <<< "$HEADER"
-      while IFS= read -r line; do
-        echo -en "$line\t"
-        echo "$line" \
-        | docker run -v "$PWD/$(dirname "$REGO_TEST_CASE")":/$(dirname "$REGO_TEST_CASE") -i $CONTAINER_ID eval --data "$REGO_TEST_CASE" --input /dev/stdin data.$PACKAGE.$RULE \
-        | jq -c .result[0].expressions[0].value
-      done < "$(dirname "$REGO_TEST_CASE")/tests.json" \
-      | docker run -i $CONTAINER_ID compose_kt_test $REGO_KT_IMPL_NAME \
-      > kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
-    fi
+    cat "$(dirname $REGO_TEST_CASE)/tests.json" "$REGO_TEST_CASE.goldens.json" \
+    | docker run -i $CONTAINER_ID compose_kt_test $REGO_KT_IMPL_NAME \
+    > kt_test/src/test/kotlin/${REGO_KT_IMPL_NAME}Test.kt
   else
     echo "Skipping '$REGO_TEST_CASE' because it has no 'kotlin_export'."
   fi
