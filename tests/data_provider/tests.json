@@ -4,7 +4,3 @@
 {"x":"ex","y":"why","z":"zee"}
 {"y":"why","z":"zee"}
 {"z":"Zed's dead baby."}
-{}	{"a":"AAA!"}
-{}	{"a":"AAA!"}	{"p.q":"This is PQ"}
-{}	{"p":{"q":"This is Q from P"}}
-{"x":"YAY"}	{"p":{"q":"This is Q from P","unused":"This is unused"}}	{"also_unused":42}
