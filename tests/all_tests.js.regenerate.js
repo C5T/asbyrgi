@@ -34,12 +34,48 @@ console.log('');
 let cases = {};
 
 const prepareTestCase = (text) => {
-  const json = JSON.parse(text);
-  return {
-    desc: JSON.stringify(json) + " WITHOUT DATA!",
-    input: json,
-    data: null
-  };
+  const fields = text.split('\t');
+  const input = JSON.parse(fields[0]);
+  if (fields.length === 1) {
+    return {
+      desc: JSON.stringify(input),
+      input: input,
+      data: null
+    };
+  } else {
+    let body = {
+      data: {}
+    };
+    for (let i = 1; i < fields.length; ++i) {
+      const elem = JSON.parse(fields[i]);
+      const keys = Object.keys(elem);
+      if (keys.length !== 1) {
+        console.error('Each `data` JSON, after the tab, should only have one key.');
+        process.exit(1);
+      }
+      let placeholder = body;
+      let placeholder_key = 'data';
+      let step_made = false;
+      keys[0].split('.').forEach(k => {
+        step_made = true;
+        if (typeof placeholder[placeholder_key] != 'object') {
+          placeholder[placeholder_key] = {};
+        }
+        placeholder = placeholder[placeholder_key];
+        placeholder_key = k;
+      });
+      if (!step_made) {
+        console.error('Each `data` JSON, after the tab, should only have one key, and this key should not be empty.');
+        process.exit(1);
+      }
+      placeholder[placeholder_key] = elem[keys[0]];
+    }
+    return {
+      desc: JSON.stringify(input) + ' + ' + JSON.stringify(body.data),
+      input: input,
+      data: body.data
+    };
+  }
 };
 
 rego.forEach(fn => {
