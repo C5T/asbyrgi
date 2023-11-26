@@ -5,15 +5,19 @@
 let function_bodies = {};
 let plans = {};
 
-const printErrorNotImplemented = () => {
-  console.error(`Not implemented in ${(new Error()).stack.split('\n')[2]}`);
+const printErrorNotImplemented = (x) => {
+  console.error(`Something in OPA transpilation is not yet implemented.\n${(new Error()).stack}`);
+  if (x !== undefined) {
+    console.log(JSON.stringify(x, null, 2));
+  }
+  process.exit(1);
 };
 
 const opa_eq = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v === args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -22,7 +26,7 @@ const opa_neq = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v !== args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -31,7 +35,7 @@ const opa_lt = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v < args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -40,7 +44,7 @@ const opa_gt = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v > args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -49,7 +53,7 @@ const opa_lte = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v <= args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -58,7 +62,7 @@ const opa_gte = (args) => {
   if (args[0].t === 'number' && args[1].t === 'number') {
     return { t: 'boolean', v: args[0].v >= args[1].v };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -71,29 +75,43 @@ const opa_rem = (args) => {
       if (b !== 0) {
         return { t: 'number', v: args[0].v % args[1].v };
       } else {
-        printErrorNotImplemented();
+        printErrorNotImplemented(args);
         return undefined;
       }
     } else {
-      printErrorNotImplemented();
+      printErrorNotImplemented(args);
       return undefined;
     }
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
   return undefined;
 };
 
 const opa_split = (args) => {
+  if (args[0].t === 'string' && args[1].t === 'string') {
+    return {t: 'string', v: args[0].v.split(args[1].v)};
+  }
+  printErrorNotImplemented(args);
+  return undefined;
+};
+
+const opa_concat = (args) => {
   if (args[0].t === 'string') {
-    if (typeof args[1] === 'string') {
-      return {t: 'string', v: args[0].v.split(args[1])};
-    } else if (args[1].t === 'string') {
-      return {t: 'string', v: args[0].v.split(args[1].v)};
+    if (args[1].t === 'array') {
+      let pieces = [];
+      for (let i = 0; i < args[1].v.length; ++i) {
+        if (args[1].v[i].t !== 'string') {
+          printErrorNotImplemented(args);
+          return undefined;
+        }
+        pieces.push(args[1].v[i].v);
+      }
+      return {t: 'string', v: pieces.join(args[0].v)};
     }
   }
-  printErrorNotImplemented();
+  printErrorNotImplemented(args);
   return undefined;
 };
 
@@ -101,7 +119,7 @@ const opa_is_value_in_set = (args) => {
   if (args[1].t === 'set' && args[0].t in args[1].v) {
     return { t: 'boolean', v: args[1].v[args[0].t].has(args[0].v) };
   } else {
-    printErrorNotImplemented();
+    printErrorNotImplemented(args);
     return undefined;
   }
 };
@@ -131,6 +149,7 @@ const opa_builtins = {
   internal: {
     member_2: opa_is_value_in_set,  // NOTE(dkorolev): Inferred from OPA's source code.
   },
+  concat: opa_concat,
 };
 
 const opa_object_get_by_key = (x, key) => {
@@ -243,6 +262,10 @@ const opa_get_function_impl = (f) => {
   if (typeof f === 'number') {
     return function_bodies[f];
   } else {
+    if (!f.builtin_func) {
+      console.error(`Unimplemented OPA builtin function: '${f.debug_builtin_func_name}'.`);
+      process.exit(1);
+    }
     return f.builtin_func;
   }
 };
@@ -306,9 +329,9 @@ const wrap_for_assignment = (x) => {
 #define BreakStmt(rowcol) return;
 
 // TODO(dkorolev): `CallDynamicStmt`.
-#define CallStmtPassArg(arg_index, arg_value) args[arg_index] = arg_value;
+#define CallStmtPassArg(arg_index, arg_value) args[arg_index] = wrap_for_assignment(arg_value);
 #define CallBuiltinStmtBegin(func, target, rowcol) target = (() => { let args = [];
-#define CallBuiltinStmtEnd(func, target) return opa_get_function_impl( {builtin_func: opa_builtins.func} )(args)})();
+#define CallBuiltinStmtEnd(func, target) return opa_get_function_impl( {builtin_func: opa_builtins.func, debug_builtin_func_name: #func} )(args)})();
 #define CallUserStmtBegin(func, target, rowcol) target = (() => { let args = [];
 #define CallUserStmtEnd(func, target) return opa_get_function_impl(func)(args)})();
 #define NotStmtBegin(rowcol) if ((() => {
