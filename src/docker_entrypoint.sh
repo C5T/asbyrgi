@@ -115,18 +115,13 @@ elif [ "$1" == "rego2kt" ] ; then
   fi
 elif [ "$1" == "gengolden" ] ; then
   if [ $# == 5 ] ; then
-    #opa build /input/"$2"
-    #opa run --server bundle.tar.gz -l error >/dev/null 2>dev/null &
-    #OPA_PID=$!
-    #sleep 0.5  # TODO(dkorolev): I would love to check `localhost:8181/health`, but it just returns `{}`, w/o HTTP code or body.
-
     while read -r QUERY ; do
-      opa eval -d /input/"$2" $(echo "$QUERY" | node src/compose_opa_golden_command.js) data.$3.$4 | jq -r .result[0].expressions[0].value
-      curl -s -d @<(echo "$QUERY" | node src/compose_curl_golden_command.js) localhost:8181/v1/data | jq -c .result.$3.$4
+      opa eval \
+        -d /input/"$2" \
+        $(echo "$QUERY" | node src/compose_opa_golden_command.js) \
+        data.$3.$4 \
+        | jq -r .result[0].expressions[0].value
     done < /input/"$5"
-
-    #kill $OPA_PID
-    #wait
     exit 0
   else
     echo 'Recommended synopsis: `docker run -v "$PWD"/input $ASBYRGI_CONTAINER_ID gengolden policy.rego myapi result tests.json`.'
