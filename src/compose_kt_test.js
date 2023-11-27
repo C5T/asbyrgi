@@ -83,7 +83,7 @@ rl.on('close', () => {
         ++i;
       }
       console.log('    @Test');
-      console.log(`    @DisplayName("""${t.test.desc}""")`);
+      console.log(`    @DisplayName("""${t.test.desc} => ${t.golden}""")`);
       if (!('data' in t.test)) {
         console.log(`    fun test${kotlin_export}${i}() = ` +
                     `run${kotlin_export}TestCase("""${t.golden}""", """${JSON.stringify(t.test.input)}""")`);

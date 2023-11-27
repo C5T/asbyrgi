@@ -26,5 +26,5 @@ jobs:
         run: |
           export ASBYRGI_CONTAINER_ID=${{ steps.asbyrgi_container.outputs.ASBYRGI_CONTAINER_ID }}
           scripts/gen_all_kt_code_and_tests.sh
-      - name: Run Kotlin tests
+      - name: 'RUN ALL KOTLIN TESTS'
         run: docker run -v "$PWD/kt_test":/kt_test $(docker build -q .) ktRunTests

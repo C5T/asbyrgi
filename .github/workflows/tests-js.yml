@@ -36,6 +36,6 @@ jobs:
         run: |
           export ASBYRGI_CONTAINER_ID=${{ steps.asbyrgi_container.outputs.ASBYRGI_CONTAINER_ID }}
           (cd asbyrgi; ./scripts/gen_all_js_tests.sh)
-      - name: 'RUN ALL JS TESTS'
+      - name: 'RUN ALL JAVASCRIPT TESTS'
         run: |
           (cd asbyrgi; ./node_modules/mocha/bin/mocha.js tests/all_tests.js)

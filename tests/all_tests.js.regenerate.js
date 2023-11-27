@@ -113,7 +113,7 @@ Object.keys(cases).sort().forEach(fn => {
   console.log(`  const policy = get_policy_main('${fn}');`);
   for (let i = 0; i < t.tests.length; ++i) {
     // NOTE(dkorolev): The outer `JSON.stringify` is needed to escape the quote in in `"Zed's dead baby."`. =)
-    console.log(`  it(${JSON.stringify(t.tests[i].desc)}, () => {`);
+    console.log(`  it(${JSON.stringify(t.tests[i].desc + ' => ' + JSON.stringify(t.goldens[i]))}, () => {`);
     console.log(`    expect(policy(${JSON.stringify(t.tests[i].input)}, ${JSON.stringify(t.tests[i].data)})).to.deep.equal(${JSON.stringify({result: t.goldens[i]})});`);
     console.log(`  });`);
   }
