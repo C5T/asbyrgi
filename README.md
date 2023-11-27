@@ -3,7 +3,80 @@
 
 # Ásbyrgi
 
-The `Asbyrgi` repository is the OPA IR playground with JavaScript.
+The `Asbyrgi` repository is the OPA IR playground with JavaScript and Kotlin.
+
+It has grown a bit to graduate from the playground stage into something useful, but the comment remains.
+
+## Quick Start
+
+Note: The below steps are functional as of 2023-Nov-26, but they might get dated. For the most up-to-date commands, please check out the Github actions source code.
+
+### Container
+
+```
+# Use the container from GHCR.
+export ASBYRGI_CONTAINER_ID=ghcr.io/dkorolev/asbyrgi:latest
+
+# Alternatively:
+# docker build .
+# export ASBYRGI_CONTAINER_ID=$(docker build -q .)
+```
+
+### Goldens
+
+```
+# Then, generate all `tests/**/*.rego.goldens.json`.
+# Runs for about a minute.
+scripts/gen_all_goldens.sh
+```
+
+### JavaScript
+
+```
+# Next for JavaScript, generate all `/tests/**/*.rego.js`.
+# Runs for under a minute.
+scripts/gen_all_js.sh
+
+# This step is not to be forgotten.
+npm i
+
+# Then, to generate & run JavaScript tests.
+# There are 170 of them at of the time of writing.
+# Alternatively, open tests/mocha.html in the browser.
+scripts/gen_all_js_tests.sh
+node_modules/mocha/bin/mocha.js tests/all_tests.js
+```
+
+### Kotlin
+
+```
+# To generate Kotlin code and tests.
+# This generates `tests/**/*.rego.kt` and `kt_test/
+
+# The `tests/**/*.rego.kt` files are copied into `kt_test/src/main/kotlin` under proper `.kt` source names.
+# And the tests are copied into `/src/test/kotlin`.
+
+# Also, the `./src/main/kotlin/RegoEngine.kt`, as well as the Gradle project, are created.
+# Note that `kt_test` does not exist as the repo is cloned.
+
+# This script takes several minutes.
+scripts/gen_all_kt_code_and_tests.sh
+```
+
+```
+# Generally speaking, the created `kt_test/` directory contains a complete Kotlin project to run.
+(cd kt_test; gradle test)
+```
+
+```
+# If you do not want to depend on the local Kotlin runtime, there is also a shortfcut.
+docker run -v "$PWD/kt_test":/kt_test $ASBYRGI_CONTAINER_ID ktRunTests
+```
+
+```
+# Last but not least, the version of `RegoEngine.kt` embedded into the container can be extracted with:
+docker run $ASBYRGI_CONTAINER_ID kt_test.tar.gz | tar xzO kt_test/src/main/kotlin/RegoEngine.kt
+```
 
 ## Vision
 
@@ -53,21 +126,33 @@ Besides, [C5T/Current](https://github.com/c5t/current) is well suited to complem
 
 ### Container
 
-The main way to use this repo is via a Docker container, currently `crnt/sleipnir`.
+The main way to use this repo is via a Docker container, currently `ghcr.io/dkorolev/asbyrgi:latest`.
 
 (I plan to move it from DockerHub to GHCR, and push automatically via a GitHub action. — D.K.)
 
 The container itself mimics the `opa` binary. In fact, for most commands, it transparently invokes the very binary:
 
 ```
-docker run crnt/sleipnir version
-Version: 0.41.0
-Build Commit: 0d6a109-dirty
-Build Timestamp: 2022-06-02T17:45:50Z
-Build Hostname: 35a936b45b0c
-Go Version: go1.18.3
+docker run ghcr.io/dkorolev/asbyrgi:latest version
+Version: 0.58.0
+Build Commit: 69a381cc8a517c8191f8b018673fefc7d98b0734
+Build Timestamp: 2023-10-26T22:07:36Z
+Build Hostname: 185436989fc2
+Go Version: go1.21.3
 Platform: linux/amd64
-WebAssembly: available
+WebAssembly: unavailable
+```
+
+Also, the version of the container itself, the git commit from this repo, can be viewed as:
+
+```
+docker run ghcr.io/dkorolev/asbyrgi:d0cc2b0 asbyrgi_version
+Asbyrgi version: d0cc2b0
+```
+
+```
+docker run ghcr.io/dkorolev/asbyrgi:latest asbyrgi_version
+Asbyrgi version: d0cc2b0
 ```
 
 Take the [A+B](https://github.com/c5t/asbyrgi/blob/main/tests/smoke/sum/policy.rego) policy example from this repo:
@@ -83,7 +168,7 @@ Here is how the DSL representation of the above policy looks like:
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i crnt/sleipnir rego2dsl smoke sum
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2dsl smoke sum
 ```
 
 ```
@@ -153,14 +238,21 @@ The raw IR representation for the above policy is a bit loo long and unreadable 
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i crnt/sleipnir rego2ir smoke sum | jq .
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2ir smoke sum | jq .
 ```
 
 And here is the [example JavaScript](https://gist.github.com/dkorolev/03cda1b005fda259d227e1388224d4f5) generated for the same Rego policy, same package, same rule; it is output by:
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i crnt/sleipnir rego2js smoke sum
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2js smoke sum
+```
+
+Also, for Kotlin:
+
+```
+curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2kt smoke sum KotlinFunctionNameForSmokeSumAuthzPolicy
 ```
 
 ### Tests
