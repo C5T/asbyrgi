@@ -17,7 +17,7 @@ Note: The below steps are functional as of 2023-Nov-26, but they might get dated
 # Use the container from GHCR.
 export ASBYRGI_CONTAINER_ID=ghcr.io/dkorolev/asbyrgi:latest
 
-# Alternatively:
+# Alternatively, build this container.
 # docker build .
 # export ASBYRGI_CONTAINER_ID=$(docker build -q .)
 ```
@@ -53,8 +53,8 @@ node_modules/mocha/bin/mocha.js tests/all_tests.js
 # To generate Kotlin code and tests.
 # This generates `tests/**/*.rego.kt` and `kt_test/
 
-# The `tests/**/*.rego.kt` files are copied into `kt_test/src/main/kotlin` under proper `.kt` source names.
-# And the tests are copied into `/src/test/kotlin`.
+# Transpiled policies, from `tests/**/*.rego.kt`, are copied into `kt_test/src/main/kotlin/`.
+# Kotlin-implemented tests are also copied into `kt_test/src/test/kotlin/`.
 
 # Also, the `./src/main/kotlin/RegoEngine.kt`, as well as the Gradle project, are created.
 # Note that `kt_test` does not exist as the repo is cloned.
@@ -69,12 +69,12 @@ scripts/gen_all_kt_code_and_tests.sh
 ```
 
 ```
-# If you do not want to depend on the local Kotlin runtime, there is also a shortfcut.
+# If you do not want to depend on the local Kotlin runtime, there is also a shortcut.
 docker run -v "$PWD/kt_test":/kt_test $ASBYRGI_CONTAINER_ID ktRunTests
 ```
 
 ```
-# Last but not least, the version of `RegoEngine.kt` embedded into the container can be extracted with:
+# Last but not least, to get the contents of `RegoEngine.kt` from the container.
 docker run $ASBYRGI_CONTAINER_ID kt_test.tar.gz | tar xzO kt_test/src/main/kotlin/RegoEngine.kt
 ```
 
@@ -130,7 +130,7 @@ The main way to use this repo is via a Docker container, currently `ghcr.io/dkor
 
 (I plan to move it from DockerHub to GHCR, and push automatically via a GitHub action. — D.K.)
 
-The container itself mimics the `opa` binary. In fact, for most commands, it transparently invokes the very binary:
+The container itself mimics the `opa` binary. In fact, for most commands, it transparently invokes the very binary.
 
 ```
 docker run ghcr.io/dkorolev/asbyrgi:latest version
@@ -143,7 +143,7 @@ Platform: linux/amd64
 WebAssembly: unavailable
 ```
 
-Also, the version of the container itself, the git commit from this repo, can be viewed as:
+Also, the version of the Asbyrgi container itself, the git commit from this repo, can be viewed as:
 
 ```
 docker run ghcr.io/dkorolev/asbyrgi:d0cc2b0 asbyrgi_version
@@ -252,7 +252,8 @@ Also, for Kotlin:
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2kt smoke sum KotlinFunctionNameForSmokeSumAuthzPolicy
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest \
+                      rego2kt smoke sum KotlinFunctionNameForSmokeSumAuthzPolicy
 ```
 
 ### Tests
