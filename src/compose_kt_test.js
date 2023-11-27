@@ -83,8 +83,7 @@ rl.on('close', () => {
         ++i;
       }
       console.log('    @Test');
-      // NOTE(dkorolev): Somehow, some `[/[]` is added at the end of test names, so extra spaces are to make them more readable.
-      console.log(`    @DisplayName("""${t.test.desc} => ${t.golden}          """)`);
+      console.log(`    @DisplayName("""${t.test.desc} => ${t.golden}""")`);
       if (!('data' in t.test)) {
         console.log(`    fun test${kotlin_export}${i}() = ` +
                     `run${kotlin_export}TestCase("""${t.golden}""", """${JSON.stringify(t.test.input)}""")`);
