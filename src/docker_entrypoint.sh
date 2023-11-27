@@ -133,7 +133,7 @@ elif [ "$1" == "gengolden" ] ; then
   fi
 elif [ "$1" == "kt_test.tar.gz" ] ; then
   cat kt_test.tar.gz
-  # Can also `docker run ${ASBYRGI_CONTAINER_ID} kt_test.tar.bz2 | tar xzO kt_test/src/main/kotlin/RegoEngine.kt`.
+  # Can also `docker run ${ASBYRGI_CONTAINER_ID} kt_test.tar.gz | tar xzO kt_test/src/main/kotlin/RegoEngine.kt`.
 elif [ "$1" == "compose_kt_test" ] ; then
   if [ $# == 2 ] ; then
     node src/compose_kt_test.js $2

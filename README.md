@@ -73,6 +73,11 @@ scripts/gen_all_kt_code_and_tests.sh
 docker run -v "$PWD/kt_test":/kt_test $ASBYRGI_CONTAINER_ID ktRunTests
 ```
 
+```
+# Last but not least, the version of `RegoEngine.kt` embedded into the container can be extracted with:
+docker run $ASBYRGI_CONTAINER_ID kt_test.tar.gz | tar xzO kt_test/src/main/kotlin/RegoEngine.kt
+```
+
 ## Vision
 
 ### Short Term
