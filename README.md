@@ -243,6 +243,13 @@ curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/polic
       | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2js smoke sum
 ```
 
+Also, for Kotlin:
+
+```
+curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2kt smoke sum KotlinFunctionNameForSmokeSumAuthzPolicy
+```
+
 ### Tests
 
 The [`tests/`](https://github.com/c5t/asbyrgi/tree/main/tests) directory of this repository contains test policies for Asbyrgi.
