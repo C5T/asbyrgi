@@ -19,7 +19,7 @@ console.log('');
 console.log('const get_policy_main = (fn) => {');
 console.log('  try {');
 console.log('    if (typeof window === "undefined") {');
-console.log('      return require(`./${fn}.js`).main;');
+console.log('      return require(`../tests/${fn}.js`).main;');
 console.log('    } else {');
 console.log('      return exported_mains[`${fn}.js`];');
 console.log('    }');
@@ -81,7 +81,7 @@ const prepareTestCase = (text) => {
 rego.forEach(fn => {
   let path = fn.split('/');
   path[path.length - 1] = 'tests.json';
-  const tests_path = path.join('/');
+  const tests_path = '../tests/' + path.join('/');
   const testsWithOptionalData = (() => {
     try {
       return fs.readFileSync(tests_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(prepareTestCase);
@@ -90,7 +90,7 @@ rego.forEach(fn => {
       process.exit(1);
     }
   })();
-  const goldens_path = fn + '.goldens.json';
+  const goldens_path = '../tests/' + fn + '.goldens.json';
   const goldens = (() => {
     try {
       return fs.readFileSync(goldens_path, {encoding:'utf8'}).split('\n').filter(x => x !== '').map(JSON.parse);

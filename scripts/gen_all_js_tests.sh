@@ -1,8 +1,11 @@
 #!/bin/bash
 
-(cd tests; find . -iname '*.rego' | sort | xargs node all_tests.js.regenerate.js >all_tests.js)
+rm -rf js_test
+mkdir js_test
 
-cat >tests/mocha.html <<EOF
+(cd js_test; (cd ../tests; find . -iname '*.rego' | sort) | xargs node ../src/generate_all_js_tests.js >all_tests.js)
+
+cat >js_test/mocha.html <<EOF
 <!doctype html>
 <head>
   <meta charset='utf-8'>
@@ -25,11 +28,11 @@ EOF
 (cd tests;
  for i in $(find . -iname '*.rego.js') ; do
    echo "  <script language='javascript'>export_main = (main) => { exported_mains['$i'] = main; };</script>" ;
-   echo "  <script src='$i'></script>" ;
+   echo "  <script src='../tests/$i'></script>" ;
    echo ;
- done) >> tests/mocha.html
+ done) >> js_test/mocha.html
 
-cat >>tests/mocha.html <<EOF
+cat >>js_test/mocha.html <<EOF
   <script src='./all_tests.js'></script>
 
   <script language='javascript'>
