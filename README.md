@@ -121,21 +121,33 @@ Besides, [C5T/Current](https://github.com/c5t/current) is well suited to complem
 
 ### Container
 
-The main way to use this repo is via a Docker container, currently `crnt/sleipnir`.
+The main way to use this repo is via a Docker container, currently `ghcr.io/dkorolev/asbyrgi:latest`.
 
 (I plan to move it from DockerHub to GHCR, and push automatically via a GitHub action. — D.K.)
 
 The container itself mimics the `opa` binary. In fact, for most commands, it transparently invokes the very binary:
 
 ```
-docker run crnt/sleipnir version
-Version: 0.41.0
-Build Commit: 0d6a109-dirty
-Build Timestamp: 2022-06-02T17:45:50Z
-Build Hostname: 35a936b45b0c
-Go Version: go1.18.3
+docker run ghcr.io/dkorolev/asbyrgi:latest version
+Version: 0.58.0
+Build Commit: 69a381cc8a517c8191f8b018673fefc7d98b0734
+Build Timestamp: 2023-10-26T22:07:36Z
+Build Hostname: 185436989fc2
+Go Version: go1.21.3
 Platform: linux/amd64
-WebAssembly: available
+WebAssembly: unavailable
+```
+
+Also, the version of the container itself, the git commit from this repo, can be viewed as:
+
+```
+docker run ghcr.io/dkorolev/asbyrgi:d0cc2b0 asbyrgi_version
+Asbyrgi version: d0cc2b0
+```
+
+```
+docker run ghcr.io/dkorolev/asbyrgi:latest asbyrgi_version
+Asbyrgi version: d0cc2b0
 ```
 
 Take the [A+B](https://github.com/c5t/asbyrgi/blob/main/tests/smoke/sum/policy.rego) policy example from this repo:
@@ -151,7 +163,7 @@ Here is how the DSL representation of the above policy looks like:
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i crnt/sleipnir rego2dsl smoke sum
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2dsl smoke sum
 ```
 
 ```
@@ -221,14 +233,14 @@ The raw IR representation for the above policy is a bit loo long and unreadable 
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i crnt/sleipnir rego2ir smoke sum | jq .
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2ir smoke sum | jq .
 ```
 
 And here is the [example JavaScript](https://gist.github.com/dkorolev/03cda1b005fda259d227e1388224d4f5) generated for the same Rego policy, same package, same rule; it is output by:
 
 ```
 curl -s https://raw.githubusercontent.com/c5t/asbyrgi/main/tests/smoke/sum/policy.rego \
-      | docker run -i crnt/sleipnir rego2js smoke sum
+      | docker run -i ghcr.io/dkorolev/asbyrgi:latest rego2js smoke sum
 ```
 
 ### Tests
