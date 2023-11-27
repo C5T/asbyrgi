@@ -284,16 +284,18 @@ const wrap_for_assignment = (x) => {
 // TODO(dkorolev): Expose the number of functions to this macro?
 #define BeginOPADSL()
 #define EndOPADSL() \
-  if (typeof window === 'undefined') { module.exports.plans = plans; } \
-  if (process.argv.length >= 2 && process.argv[process.argv.length - 2] === '-p') { \
-    const express = require('express'); \
-    const app = express(); \
-    app.use(express.json()); \
-    app.post('*', function(req, res) { \
-      res.send({result: main(req.body.input, {})}); \
-    }); \
-    app.listen(Number(process.argv[process.argv.length - 1])); \
-  } \
+    if (typeof window === 'undefined') { \
+      module.exports.plans = plans; \
+      if (process.argv.length >= 2 && process.argv[process.argv.length - 2] === '-p') { \
+        const express = require('express'); \
+        const app = express(); \
+        app.use(express.json()); \
+        app.post('*', function(req, res) { \
+          res.send({result: main(req.body.input, {})}); \
+        }); \
+        app.listen(Number(process.argv[process.argv.length - 1])); \
+      } \
+    } \
   })();
 
 #define BeginStaticStrings() const static_strings = [

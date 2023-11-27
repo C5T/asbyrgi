@@ -38,4 +38,4 @@ jobs:
           (cd asbyrgi; ./scripts/gen_all_js_tests.sh)
       - name: 'RUN ALL JAVASCRIPT TESTS'
         run: |
-          (cd asbyrgi; ./node_modules/mocha/bin/mocha.js tests/all_tests.js)
+          (cd asbyrgi; ./node_modules/mocha/bin/mocha.js js_test/all_tests.js)

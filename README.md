@@ -42,9 +42,9 @@ npm i
 
 # Then, to generate & run JavaScript tests.
 # There are 170 of them at of the time of writing.
-# Alternatively, open tests/mocha.html in the browser.
+# Alternatively, open js_test/mocha.html in the browser.
 scripts/gen_all_js_tests.sh
-node_modules/mocha/bin/mocha.js tests/all_tests.js
+node_modules/mocha/bin/mocha.js js_test/all_tests.js
 ```
 
 ### Kotlin
