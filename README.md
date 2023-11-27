@@ -3,7 +3,75 @@
 
 # Ásbyrgi
 
-The `Asbyrgi` repository is the OPA IR playground with JavaScript.
+The `Asbyrgi` repository is the OPA IR playground with JavaScript and Kotlin.
+
+It has grown a bit to graduate from the playground stage into something useful, but the comment remains.
+
+## Quick Start
+
+Note: The below steps are functional as of 2023-Nov-26, but they might get dated. For the most up-to-date commands, please check out the Github actions source code.
+
+### Container
+
+```
+# Use the container from GHCR.
+export ASBYRGI_CONTAINER_ID=ghcr.io/dkorolev/asbyrgi:latest
+
+# Alternatively:
+# docker build .
+# export ASBYRGI_CONTAINER_ID=$(docker build -q .)
+```
+
+### Goldens
+
+```
+# Then, generate all `tests/**/*.rego.goldens.json`.
+# Runs for about a minute.
+scripts/gen_all_goldens.sh
+```
+
+### JavaScript
+
+```
+# Next for JavaScript, generate all `/tests/**/*.rego.js`.
+# Runs for under a minute.
+scripts/gen_all_js.sh
+
+# This step is not to be forgotten.
+npm i
+
+# Then, to generate & run JavaScript tests.
+# There are 170 of them at of the time of writing.
+# Alternatively, open tests/mocha.html in the browser.
+scripts/gen_all_js_tests.sh
+node_modules/mocha/bin/mocha.js tests/all_tests.js
+```
+
+### Kotlin
+
+```
+# To generate Kotlin code and tests.
+# This generates `tests/**/*.rego.kt` and `kt_test/
+
+# The `tests/**/*.rego.kt` files are copied into `kt_test/src/main/kotlin` under proper `.kt` source names.
+# And the tests are copied into `/src/test/kotlin`.
+
+# Also, the `./src/main/kotlin/RegoEngine.kt`, as well as the Gradle project, are created.
+# Note that `kt_test` does not exist as the repo is cloned.
+
+# This script takes several minutes.
+scripts/gen_all_kt_code_and_tests.sh
+```
+
+```
+# Generally speaking, the created `kt_test/` directory contains a complete Kotlin project to run.
+(cd kt_test; gradle test)
+```
+
+```
+# If you do not want to depend on the local Kotlin runtime, there is also a shortfcut.
+docker run -v "$PWD/kt_test":/kt_test $ASBYRGI_CONTAINER_ID ktRunTests
+```
 
 ## Vision
 
