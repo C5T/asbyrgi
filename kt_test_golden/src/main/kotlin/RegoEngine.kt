@@ -268,33 +268,39 @@ fun authzValueToJson(node: AuthzValue): JsonElement = when (node) {
 
 fun authzResultToJson(result: AuthzResult): JsonElement = result.asJsonElement()
 
-fun regoDotStmt(input: AuthzValue, key: String, authzDataProvider: AuthzDataProvider): AuthzValue = when (input) {
-    is AuthzValue.OBJECT -> input.fields.getOrElse(key, { AuthzValue.UNDEFINED })
-    is AuthzValue.ARRAY -> {
-        val i = key.toInt()
-        if (i >= 0 && i < input.elements.size) {
-            input.elements[i]
-        } else {
-            // TODO(dkorolev): Is this acceptable?
-            println("""DotStmt on an array with an out-of-bounds index.""")
-            exitProcess(1)
-            AuthzValue.UNDEFINED
+fun regoDotStmt(input: AuthzValue, key: String?, authzDataProvider: AuthzDataProvider): AuthzValue {
+    if (key == null) {
+        return AuthzValue.UNDEFINED
+    } else {
+        return when(input) {
+            is AuthzValue.OBJECT -> input.fields.getOrElse(key, { AuthzValue.UNDEFINED })
+            is AuthzValue.ARRAY -> {
+                val i = key.toInt()
+                if (i >= 0 && i < input.elements.size) {
+                    input.elements[i]
+                } else {
+                    // TODO(dkorolev): Is this acceptable?
+                    println("""DotStmt on an array with an out-of-bounds index.""")
+                    exitProcess(1)
+                    AuthzValue.UNDEFINED
+                }
+            }
+            is AuthzValue.DATA -> {
+                val augmentedPath = input.path + "." + key
+                val maybeResult = authzDataProvider.maybeCompute(augmentedPath)
+                if (maybeResult != null) {
+                    maybeResult
+                } else {
+                    AuthzValue.DATA(augmentedPath, authzDataProvider)
+                }
+            }
+            else -> {
+                // TODO(dkorolev): Is this acceptable?
+                // println("""DotStmt on an array with an out-of-bounds index.""")
+                // exitProcess(1)
+                AuthzValue.UNDEFINED
+            }
         }
-    }
-    is AuthzValue.DATA -> {
-        val augmentedPath = input.path + "." + key
-        val maybeResult = authzDataProvider.maybeCompute(augmentedPath)
-        if (maybeResult != null) {
-            maybeResult
-        } else {
-            AuthzValue.DATA(augmentedPath, authzDataProvider)
-        }
-    }
-    else -> {
-        // TODO(dkorolev): Is this acceptable?
-        println("""DotStmt on an array with an out-of-bounds index.""")
-        exitProcess(1)
-        AuthzValue.UNDEFINED
     }
 }
 
@@ -361,17 +367,16 @@ fun regoVal(unused: MutableMap<Int, AuthzValue>, value: String): AuthzValue = Au
 fun isRegoValNotDefined(v: AuthzValue): Boolean = (v is AuthzValue.UNDEFINED) || (v is AuthzValue.DATA)
 
 // TODO(dkorolev): A special type for indexes, as indexing arrays as string is sort of dated in 2023.
-fun regoStringWrapper(unused: MutableMap<Int, AuthzValue>, s: String): String = s
-fun regoStringWrapper(locals: MutableMap<Int, AuthzValue>, i: Int): String {
+fun regoStringWrapper(unused: MutableMap<Int, AuthzValue>, s: String): String? = s
+fun regoStringWrapper(locals: MutableMap<Int, AuthzValue>, i: Int): String? {
     val maybeStringValue = locals[i]
     if (maybeStringValue is AuthzValue.STRING) {
         return maybeStringValue.string
     } else if (maybeStringValue is AuthzValue.INT) {
         return maybeStringValue.number.toString()
     } else {
-        println("We are not really accepting non-string and non-int indexes.")
-        exitProcess(1)
-        return ""
+        // NOTE(dkorolev): Evidently, this is possible. Just return `null`, so that `regoDotStmt` returns `UNDEFINED`.
+        return null
     }
 }
 
@@ -602,11 +607,10 @@ class RegoBuiltins {
                 // NOTE(dkorolev): This `member_2` OPA builtin checks whether a value is present in a set.
                 val a: AuthzValue = regoVal(args, 0)
                 val b: AuthzValue = regoVal(args, 1)
-                if (b is AuthzValue.SET) {
+                if (b is AuthzValue.SET && !(a is AuthzValue.UNDEFINED || a is AuthzValue.DATA)) {
                     return AuthzValue.BOOLEAN(b.elems.contains(a))
                 } else {
-                    println("""`internal.member_2`, which is effectively `setContains()` on a non-Set.""")
-                    exitProcess(1)
+                    // NOTE(dkorolev): Evidently, it's not impossible to try to invoke `setContains()` on a non-Set.
                     return AuthzValue.UNDEFINED
                 }
             }
