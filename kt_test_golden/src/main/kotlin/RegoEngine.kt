@@ -448,7 +448,7 @@ class AuthzDataProvider {
         fun helper(): AuthzValue {
             return AuthzValue.NULL
         }
-        paths[path] = helper
+        paths[path] = ::helper
         return this
     }
 
