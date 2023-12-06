@@ -191,6 +191,16 @@ class AuthzResult {
             return r
         }
 
+        fun NULL(): AuthzResult {
+            var r = AuthzResult()
+            r.hasSomeResult = true
+            r.hasUniqueResult = true
+            r.someResult = AuthzValue.NULL
+            r.allResultsSet.add(r.someResult)
+            r.allResultsList.add(r.someResult)
+            return r
+        }
+
         // TODO(dkorolev): More in-place "constructors" for `AuthzResult`.
     }
 }
