@@ -191,6 +191,16 @@ class AuthzResult {
             return r
         }
 
+        fun NULL(): AuthzResult {
+            var r = AuthzResult()
+            r.hasSomeResult = true
+            r.hasUniqueResult = true
+            r.someResult = AuthzValue.NULL
+            r.allResultsSet.add(r.someResult)
+            r.allResultsList.add(r.someResult)
+            return r
+        }
+
         // TODO(dkorolev): More in-place "constructors" for `AuthzResult`.
     }
 }
@@ -392,9 +402,23 @@ class AuthzDataProvider {
         return this
     }
 
+    fun injectBoolean(path: String, value: Boolean): AuthzDataProvider {
+        fun helper(): AuthzValue = AuthzValue.BOOLEAN(value)
+        paths[path] = ::helper
+        return this
+    }
+
     fun injectInt(path: String, cb: () -> Int): AuthzDataProvider {
         fun helper(): AuthzValue {
             return AuthzValue.INT(cb())
+        }
+        paths[path] = ::helper
+        return this
+    }
+
+    fun injectInt(path: String, value: Int): AuthzDataProvider {
+        fun helper(): AuthzValue {
+            return AuthzValue.INT(value)
         }
         paths[path] = ::helper
         return this
@@ -408,10 +432,33 @@ class AuthzDataProvider {
         return this
     }
 
-    // TODO(dkorolev): More injectors!
+    fun injectString(path: String, value: String): AuthzDataProvider {
+        fun helper(): AuthzValue {
+            return AuthzValue.STRING(value)
+        }
+        paths[path] = ::helper
+        return this
+    }
+
 
     fun injectValue(path: String, cb: () -> AuthzValue): AuthzDataProvider {
         paths[path] = cb
+        return this
+    }
+
+    fun injectValue(path: String, value: AuthzValue): AuthzDataProvider {
+        fun helper(): AuthzValue {
+            return value
+        }
+        paths[path] = ::helper
+        return this
+    }
+
+    fun injectNull(path: String): AuthzDataProvider {
+        fun helper(): AuthzValue {
+            return AuthzValue.NULL
+        }
+        paths[path] = ::helper
         return this
     }
 
