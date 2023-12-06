@@ -114,7 +114,7 @@ rl.on('close', () => {
         init.forEach((e) => {
           console.log(`        ${e}`);
         });
-        console.log(`        var dp: AuthzDataProvider = AuthzDataProvider()`);
+        console.log(`        var dp = AuthzDataProvider()`);
         inject.forEach((e) => {
           console.log(`        dp.inject${e}`);
         });
